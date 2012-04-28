@@ -34,7 +34,7 @@ bool MyViewer::openMesh(std::string const &filename)
 
 void MyViewer::init()
 {
-  // OpenGL initializations go here
+  glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 1);
 }
 
 void MyViewer::draw()
