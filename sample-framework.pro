@@ -1,6 +1,6 @@
 # -*- mode: Makefile -*-
 
-TARGET = onallo-alap
+TARGET = sample-framework
 CONFIG *= qt opengl release
 QT *= opengl xml
 
