@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <iostream>
 #include <vector>
 
 #include <QKeyEvent>
@@ -63,12 +64,12 @@ void MyViewer::updateMeanCurvature()
       MyMesh::HalfedgeHandle h1 = mesh.halfedge_handle(j, 0);
       MyMesh::HalfedgeHandle h2 = mesh.halfedge_handle(j, 1);
       Vector v = halfedgeVector(h1);
-      if(mesh.is_boundary(h1) || mesh.is_boundary(h2)) {
+      if(mesh.is_boundary(h1) || mesh.is_boundary(h2))
         angle = 0.0;
-      } else {
+      else {
         Vector n1 = mesh.normal(mesh.face_handle(h1));
         Vector n2 = mesh.normal(mesh.face_handle(h2));
-        angle = acos(n1 | n2);
+        angle = acos(std::min(std::max(n1 | n2, -1.0f), 1.0f));
         angle *= ((n1 % n2) | v) >= 0.0 ? 1.0 : -1.0;
       }
       mesh.data(i).mean += angle * v.norm();
