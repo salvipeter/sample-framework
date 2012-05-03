@@ -208,22 +208,25 @@ void MyViewer::postSelection(const QPoint &)
 
 void MyViewer::keyPressEvent(QKeyEvent *e)
 {
-  switch(e->key()) {
-  case Qt::Key_M:
-    show_mean = !show_mean;
-    updateGL();
-    break;
-  case Qt::Key_S:
-    show_solid = !show_solid;
-    updateGL();
-    break;
-  case Qt::Key_W:
-    show_wireframe = !show_wireframe;
-    updateGL();
-    break;
-  default:
+  if(e->modifiers() == Qt::NoModifier)
+    switch(e->key()) {
+    case Qt::Key_M:
+      show_mean = !show_mean;
+      updateGL();
+      break;
+    case Qt::Key_S:
+      show_solid = !show_solid;
+      updateGL();
+      break;
+    case Qt::Key_W:
+      show_wireframe = !show_wireframe;
+      updateGL();
+      break;
+    default:
+      QGLViewer::keyPressEvent(e);
+    }
+  else
     QGLViewer::keyPressEvent(e);
-  }
 }
 
 void MyViewer::mouseMoveEvent(QMouseEvent *e)
