@@ -62,8 +62,8 @@ void MyViewer::updateMeanCurvature()
       } else {
         Vector n1 = mesh.normal(mesh.face_handle(h1));
         Vector n2 = mesh.normal(mesh.face_handle(h2));
-        angle = n1 | n2;
-        angle *= ((n1 % n2) | v) > 0.0 ? 1.0 : -1.0;
+        angle = acos(n1 | n2);
+        angle *= ((n1 % n2) | v) >= 0.0 ? 1.0 : -1.0;
       }
       mesh.data(i).mean += angle * v.norm();
     }

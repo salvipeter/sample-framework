@@ -112,7 +112,7 @@ void MyWindow::setRange()
 
   double max = std::numeric_limits<double>::max();
   sb1->setDecimals(5);                 sb2->setDecimals(5);
-  sb1->setRange(-max, max);            sb2->setRange(-max, max);
+  sb1->setRange(-max, 0.0);            sb2->setRange(0.0, max);
   sb1->setSingleStep(0.01);            sb2->setSingleStep(0.01);
   sb1->setValue(viewer->getMeanMin()); sb2->setValue(viewer->getMeanMax());
   connect(cancel, SIGNAL(pressed()), dlg, SLOT(reject()));
