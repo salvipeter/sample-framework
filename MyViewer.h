@@ -24,6 +24,8 @@ public:
 protected:
   virtual void init();
   virtual void draw();
+  virtual void keyPressEvent(QKeyEvent *e);
+  virtual QString helpString() const;
 
 private:
   struct MyTraits : public OpenMesh::DefaultTraits {
@@ -46,6 +48,7 @@ private:
   MyMesh mesh;
   double mean_min, mean_max;
   double cutoff_ratio;
+  bool show_mean, show_solid, show_wireframe;
 };
 
 #include "MyViewer.hpp"

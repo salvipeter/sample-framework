@@ -1,12 +1,16 @@
 #include <algorithm>
 #include <vector>
 
+#include <QKeyEvent>
+
 #include <OpenMesh/Core/IO/MeshIO.hh>
 
 #include "MyViewer.h"
 
-MyViewer::MyViewer(QWidget *parent) : QGLViewer(parent),
-                                      mean_min(0.0), mean_max(0.0), cutoff_ratio(0.05)
+MyViewer::MyViewer(QWidget *parent) :
+  QGLViewer(parent),
+  mean_min(0.0), mean_max(0.0), cutoff_ratio(0.05),
+  show_mean(false), show_solid(true), show_wireframe(false)
 {
 }
 
@@ -127,15 +131,73 @@ void MyViewer::init()
 
 void MyViewer::draw()
 {
-  std::vector<double> color(3);
-  for(MyMesh::ConstFaceIter i = mesh.faces_begin(), ie = mesh.faces_end(); i != ie; ++i) {
-    glBegin(GL_POLYGON);
-    glNormal3fv(mesh.normal(i).data());
-    for(MyMesh::ConstFaceVertexIter j(mesh, i); (bool)j; ++j) {
-      meanMapColor(mesh.data(j).mean, &color[0]);
-      glColor3dv(&color[0]);
-      glVertex3fv(mesh.point(j).data());
+  if(!show_solid && show_wireframe)
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  else
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  glLineWidth(1.0);
+
+  std::vector<double> color(3, 1.0);
+  if(show_solid || show_wireframe)
+    for(MyMesh::ConstFaceIter i = mesh.faces_begin(), ie = mesh.faces_end(); i != ie; ++i) {
+      glBegin(GL_POLYGON);
+      glNormal3fv(mesh.normal(i).data());
+      for(MyMesh::ConstFaceVertexIter j(mesh, i); (bool)j; ++j) {
+        if(show_mean)
+          meanMapColor(mesh.data(j).mean, &color[0]);
+        glColor3dv(&color[0]);
+        glVertex3fv(mesh.point(j).data());
+      }
+      glEnd();
     }
-    glEnd();
+
+  if(show_solid && show_wireframe) {
+    glPolygonMode(GL_FRONT, GL_LINE);
+    glColor3d(0.0, 0.0, 0.0);
+    glLineWidth(2.0);
+    glDisable(GL_LIGHTING);
+    for(MyMesh::ConstFaceIter i = mesh.faces_begin(), ie = mesh.faces_end(); i != ie; ++i) {
+      glBegin(GL_POLYGON);
+      for(MyMesh::ConstFaceVertexIter j(mesh, i); (bool)j; ++j)
+        glVertex3fv(mesh.point(j).data());
+      glEnd();
+    }
+    glEnable(GL_LIGHTING);
   }
+}
+
+void MyViewer::keyPressEvent(QKeyEvent *e)
+{
+  switch(e->key()) {
+  case Qt::Key_M:
+    show_mean = !show_mean;
+    updateGL();
+    break;
+  case Qt::Key_S:
+    show_solid = !show_solid;
+    updateGL();
+    break;
+  case Qt::Key_W:
+    show_wireframe = !show_wireframe;
+    updateGL();
+    break;
+  default:
+    QGLViewer::keyPressEvent(e);
+  }
+}
+
+QString MyViewer::helpString() const
+{
+  QString text("<h2>Sample Framework</h2>"
+               "<p>This is a minimal framework for 3D mesh manipulation, which can be "
+               "extended and used as a base for various projects, for example "
+               "prototypes for fairing algorithms, or even displaying/modifying "
+               "parametric surfaces, etc.</p>"
+               "<p>The following hotkeys are available:</p>"
+               "<ul>"
+               "<li>&nbsp;M: Toggle mean map</li>"
+               "<li>&nbsp;S: Toggle solid (filled polygon) visualization</li>"
+               "<li>&nbsp;W: Toggle wireframe visualization</li>"
+               "</ul>");
+  return text;
 }
