@@ -14,6 +14,8 @@ public:
 
 private slots:
   void open();
+  void setCutoff();
+  void setRange();
 
 private:
   MyViewer *viewer;

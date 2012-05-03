@@ -1,7 +1,15 @@
+#include <limits>
+
+#include <QDoubleSpinBox>
 #include <QFileDialog>
+#include <QGridLayout>
+#include <QHBoxLayout>
+#include <QLabel>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QPushButton>
 #include <QStatusBar>
+#include <QVBoxLayout>
 
 #include "MyWindow.h"
 
@@ -27,9 +35,21 @@ MyWindow::MyWindow() : QMainWindow()
   quitAction->setStatusTip(tr("Quit the program"));
   connect(quitAction, SIGNAL(triggered()), this, SLOT(close()));
 
+  QAction *cutoffAction = new QAction(tr("Set &cutoff ratio"), this);
+  cutoffAction->setStatusTip(tr("Set mean map cutoff ratio"));
+  connect(cutoffAction, SIGNAL(triggered()), this, SLOT(setCutoff()));
+
+  QAction *rangeAction = new QAction(tr("Set &range"), this);
+  rangeAction->setStatusTip(tr("Set mean map range"));
+  connect(rangeAction, SIGNAL(triggered()), this, SLOT(setRange()));
+
   QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
   fileMenu->addAction(openAction);
   fileMenu->addAction(quitAction);
+
+  QMenu *visMenu = menuBar()->addMenu(tr("&Visualization"));
+  visMenu->addAction(cutoffAction);
+  visMenu->addAction(rangeAction);
 }
 
 MyWindow::~MyWindow()
@@ -45,4 +65,72 @@ void MyWindow::open()
     if(!viewer->openMesh(fileName.toUtf8().data()))
       QMessageBox::warning(this, tr("Cannot open file"),
                            tr("Could not open file: ") + fileName + ".");
+}
+
+void MyWindow::setCutoff()
+{
+  QDialog *dlg = new QDialog(this);
+  QHBoxLayout *hb1 = new QHBoxLayout, *hb2 = new QHBoxLayout;
+  QVBoxLayout *vb = new QVBoxLayout;
+  QLabel *text = new QLabel(tr("Cutoff ratio:"));
+  QDoubleSpinBox *sb = new QDoubleSpinBox;
+  QPushButton *cancel = new QPushButton(tr("Cancel"));
+  QPushButton *ok = new QPushButton(tr("Ok"));
+
+  sb->setDecimals(3);
+  sb->setRange(0.001, 0.5);
+  sb->setSingleStep(0.01);
+  sb->setValue(viewer->getCutoffRatio());
+  connect(cancel, SIGNAL(pressed()), dlg, SLOT(reject()));
+  connect(ok, SIGNAL(pressed()), dlg, SLOT(accept()));
+  ok->setDefault(true);
+
+  hb1->addWidget(text);
+  hb1->addWidget(sb);
+  hb2->addWidget(cancel);
+  hb2->addWidget(ok);
+  vb->addLayout(hb1);
+  vb->addLayout(hb2);
+
+  dlg->setWindowTitle(tr("Set ratio"));
+  dlg->setLayout(vb);
+
+  if(dlg->exec() == QDialog::Accepted) {
+    viewer->setCutoffRatio(sb->value());
+    viewer->updateGL();
+  }
+}
+
+void MyWindow::setRange()
+{
+  QDialog *dlg = new QDialog(this);
+  QGridLayout *grid = new QGridLayout;
+  QLabel *text1 = new QLabel(tr("Min:")), *text2 = new QLabel(tr("Max:"));
+  QDoubleSpinBox *sb1 = new QDoubleSpinBox, *sb2 = new QDoubleSpinBox;
+  QPushButton *cancel = new QPushButton(tr("Cancel"));
+  QPushButton *ok = new QPushButton(tr("Ok"));
+
+  double max = std::numeric_limits<double>::max();
+  sb1->setDecimals(5);                 sb2->setDecimals(5);
+  sb1->setRange(-max, max);            sb2->setRange(-max, max);
+  sb1->setSingleStep(0.01);            sb2->setSingleStep(0.01);
+  sb1->setValue(viewer->getMeanMin()); sb2->setValue(viewer->getMeanMax());
+  connect(cancel, SIGNAL(pressed()), dlg, SLOT(reject()));
+  connect(ok, SIGNAL(pressed()), dlg, SLOT(accept()));
+  ok->setDefault(true);
+
+  grid->addWidget( text1, 1, 1, Qt::AlignRight);
+  grid->addWidget(   sb1, 1, 2);
+  grid->addWidget( text2, 2, 1, Qt::AlignRight);
+  grid->addWidget(   sb2, 2, 2);
+  grid->addWidget(cancel, 3, 1);
+  grid->addWidget(    ok, 3, 2);
+  dlg->setWindowTitle(tr("Set range"));
+  dlg->setLayout(grid);
+
+  if(dlg->exec() == QDialog::Accepted) {
+    viewer->setMeanMin(sb1->value());
+    viewer->setMeanMax(sb2->value());
+    viewer->updateGL();
+  }
 }
