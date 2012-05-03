@@ -42,7 +42,7 @@ void MyViewer::updateMeanCurvature()
     mesh.data(i).mean = 0;
     for(MyMesh::ConstVertexFaceIter j(mesh, i); (bool)j; ++j) {
       if(mesh.data(j).area == -1) {
-        MyMesh::HalfedgeHandle h1 = mesh.halfedge_handle(j);
+        MyMesh::HalfedgeHandle h1 = mesh.halfedge_handle((OpenMesh::FaceHandle const &)j);
         MyMesh::HalfedgeHandle h2 = mesh.next_halfedge_handle(h1);
         mesh.data(j).area = (halfedgeVector(h1) % halfedgeVector(h2)).norm() / 2.0;
       }
