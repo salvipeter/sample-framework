@@ -226,6 +226,19 @@ void MyViewer::keyPressEvent(QKeyEvent *e)
   }
 }
 
+void MyViewer::mouseMoveEvent(QMouseEvent *e)
+{
+  if(selectedName() != -1 && e->modifiers() & Qt::ShiftModifier && e->buttons() & Qt::LeftButton) {
+    bool found;
+    qglviewer::Vec p = camera()->pointUnderPixel(e->pos(), found);
+    if(found) {
+      mesh.set_point(selected, MyMesh::Point(p[0], p[1], p[2]));
+      updateGL();
+    }
+  } else
+    QGLViewer::mouseMoveEvent(e);
+}
+
 QString MyViewer::helpString() const
 {
   QString text("<h2>Sample Framework</h2>"
@@ -238,6 +251,12 @@ QString MyViewer::helpString() const
                "<li>&nbsp;M: Toggle mean map</li>"
                "<li>&nbsp;S: Toggle solid (filled polygon) visualization</li>"
                "<li>&nbsp;W: Toggle wireframe visualization</li>"
-               "</ul>");
+               "</ul>"
+               "<p>There is also simple selection and movement interface, enabled "
+               "only when the wireframe is displayed: a mesh vertex can be selected "
+               "by shift-clicking, and it can be moved by shift-dragging. "
+               "The vertex always remains on the original mesh.</p>"
+               "<p>This is evidently of little practical use; it serves "
+               "only to demonstrate the selection and movement process.</p>");
   return text;
 }

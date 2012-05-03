@@ -27,6 +27,7 @@ protected:
   virtual void drawWithNames();
   virtual void postSelection(const QPoint &p);
   virtual void keyPressEvent(QKeyEvent *e);
+  virtual void mouseMoveEvent(QMouseEvent *e);
   virtual QString helpString() const;
 
 private:
