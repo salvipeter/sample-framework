@@ -12,6 +12,8 @@ MyViewer::MyViewer(QWidget *parent) :
   mean_min(0.0), mean_max(0.0), cutoff_ratio(0.05),
   show_mean(false), show_solid(true), show_wireframe(false)
 {
+  setSelectRegionWidth(5);
+  setSelectRegionHeight(5);
 }
 
 MyViewer::~MyViewer()
@@ -120,6 +122,7 @@ bool MyViewer::openMesh(std::string const &filename)
                                 qglviewer::Vec(box_max[0], box_max[1], box_max[2]));
   camera()->showEntireScene();
 
+  setSelectedName(-1);
   updateGL();
   return true;
 }
@@ -135,7 +138,9 @@ void MyViewer::draw()
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   else
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  glLineWidth(1.0);
+
+  glEnable(GL_POLYGON_OFFSET_FILL);
+  glPolygonOffset(1, 1);
 
   std::vector<double> color(3, 1.0);
   if(show_solid || show_wireframe)
@@ -154,7 +159,6 @@ void MyViewer::draw()
   if(show_solid && show_wireframe) {
     glPolygonMode(GL_FRONT, GL_LINE);
     glColor3d(0.0, 0.0, 0.0);
-    glLineWidth(2.0);
     glDisable(GL_LIGHTING);
     for(MyMesh::ConstFaceIter i = mesh.faces_begin(), ie = mesh.faces_end(); i != ie; ++i) {
       glBegin(GL_POLYGON);
@@ -164,6 +168,41 @@ void MyViewer::draw()
     }
     glEnable(GL_LIGHTING);
   }
+
+  if(show_wireframe && selectedName() != -1) {
+    glDisable(GL_LIGHTING);
+    glEnable(GL_POINT_SMOOTH);
+    glPointSize(10.0);
+    glColor3d(0.4, 0.4, 1.0);
+    glBegin(GL_POINTS);
+    glVertex3fv(mesh.point(selected).data());
+    glEnd();
+    glEnable(GL_LIGHTING);
+  }
+}
+
+void MyViewer::drawWithNames()
+{
+  if(!show_wireframe)
+    return;
+
+  int j = 0;
+  for(MyMesh::ConstVertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i) {
+    glPushName(j++);
+    glRasterPos3fv(mesh.point(i).data());
+    glPopName();
+  }
+}
+
+void MyViewer::postSelection(const QPoint &)
+{
+  int sel = selectedName();
+  if(sel == -1)
+    return;
+
+  MyMesh::ConstVertexIter i = mesh.vertices_begin();
+  for(int j = 0; j != sel; ++i, ++j);
+  selected = i;
 }
 
 void MyViewer::keyPressEvent(QKeyEvent *e)
