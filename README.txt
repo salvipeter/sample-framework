@@ -1,3 +1,15 @@
+=========
+= USAGE =
+=========
+
+Pressing 'h' displays a help window that contains all the necessary information.
+If you want to use this as a base for your own project, examine the source code
+and read the documentation of the various libraries (see "Dependencies" below).
+
+================
+= INSTALLATION =
+================
+
 Dependencies:
 - Qt4 (http://qt.nokia.com/)
 - libQGLViewer (http://www.libqglviewer.com/)

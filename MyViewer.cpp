@@ -255,11 +255,21 @@ QString MyViewer::helpString() const
                "<li>&nbsp;S: Toggle solid (filled polygon) visualization</li>"
                "<li>&nbsp;W: Toggle wireframe visualization</li>"
                "</ul>"
-               "<p>There is also simple selection and movement interface, enabled "
+               "<p>There is also a simple selection and movement interface, enabled "
                "only when the wireframe is displayed: a mesh vertex can be selected "
                "by shift-clicking, and it can be moved by shift-dragging. "
                "The vertex always remains on the original mesh.</p>"
                "<p>This is evidently of little practical use; it serves "
-               "only to demonstrate the selection and movement process.</p>");
+               "only to demonstrate the selection and movement process.</p>"
+               "<p>Note that libQGLViewer is furnished with a lot of useful features, "
+               "such as storing/loading view positions, or saving screenshots. "
+               "OpenMesh also has a nice collection of tools for mesh manipulation: "
+               "decimation, subdivision, smoothing, etc. These can provide "
+               "good comparisons to the methods you implement.</p>"
+               "<p>This software can be used as a sample GUI base for handling "
+               "parametric or procedural surfaces, as well. The power of "
+               "Qt and libQGLViewer makes it easy to set up a prototype application. "
+               "Feel free to modify and explore!</p>"
+               "<p align=\"right\">Peter Salvi</p>");
   return text;
 }
