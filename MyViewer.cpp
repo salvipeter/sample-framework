@@ -5,6 +5,7 @@
 #include <QKeyEvent>
 
 #include <OpenMesh/Core/IO/MeshIO.hh>
+#include <OpenMesh/Tools/Smoother/JacobiLaplaceSmootherT.hh>
 
 #include "MyViewer.h"
 
@@ -38,7 +39,7 @@ void MyViewer::updateMeanMinMax()
   mean_max = std::max(mean[n-k], 0.0);
 }
 
-void MyViewer::updateMeanCurvature()
+void MyViewer::updateMeanCurvature(bool update_min_max)
 {
   for(MyMesh::ConstFaceIter i = mesh.faces_begin(), ie = mesh.faces_end(); i != ie; ++i)
     mesh.data(i).area = -1;
@@ -77,7 +78,8 @@ void MyViewer::updateMeanCurvature()
     mesh.data(i).mean *= 3.0 / 4.0 / mesh.data(i).area;
   }
 
-  updateMeanMinMax();
+  if(update_min_max)
+    updateMeanMinMax();
 }
 
 void MyViewer::meanMapColor(double d, double *color) const
@@ -101,6 +103,21 @@ void MyViewer::meanMapColor(double d, double *color) const
     color[1] = 1.0 - alpha;
     color[2] = 0;
   }
+}
+
+void MyViewer::fairMesh()
+{
+  emit startComputation(tr("Fairing mesh..."));
+  OpenMesh::Smoother::JacobiLaplaceSmootherT<MyMesh> smoother(mesh);
+  smoother.initialize(OpenMesh::Smoother::SmootherT<MyMesh>::Normal, // or: Tangential_and_Normal
+                      OpenMesh::Smoother::SmootherT<MyMesh>::C1);
+  for(size_t i = 1; i <= 10; ++i) {
+    smoother.smooth(10);
+    emit midComputation(i * 10);
+  }
+  mesh.update_face_normals();
+  updateMeanCurvature(false);
+  emit endComputation();
 }
 
 bool MyViewer::openMesh(std::string const &filename)
@@ -222,6 +239,10 @@ void MyViewer::keyPressEvent(QKeyEvent *e)
       show_wireframe = !show_wireframe;
       updateGL();
       break;
+    case Qt::Key_F:
+      fairMesh();
+      updateGL();
+      break;
     default:
       QGLViewer::keyPressEvent(e);
     }
@@ -254,6 +275,7 @@ QString MyViewer::helpString() const
                "<li>&nbsp;M: Toggle mean map</li>"
                "<li>&nbsp;S: Toggle solid (filled polygon) visualization</li>"
                "<li>&nbsp;W: Toggle wireframe visualization</li>"
+               "<li>&nbsp;F: Fair mesh</li>"
                "</ul>"
                "<p>There is also a simple selection and movement interface, enabled "
                "only when the wireframe is displayed: a mesh vertex can be selected "

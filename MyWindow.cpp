@@ -1,5 +1,6 @@
 #include <limits>
 
+#include <QApplication>
 #include <QDoubleSpinBox>
 #include <QFileDialog>
 #include <QGridLayout>
@@ -7,18 +8,26 @@
 #include <QLabel>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QProgressBar>
 #include <QPushButton>
 #include <QStatusBar>
 #include <QVBoxLayout>
 
 #include "MyWindow.h"
 
-MyWindow::MyWindow() : QMainWindow()
+MyWindow::MyWindow(QApplication *parent) : QMainWindow(), parent(parent)
 {
   setWindowTitle(tr("Sample 3D Framework"));
   setStatusBar(new QStatusBar);
+  progress = new QProgressBar;
+  progress->setMinimum(0); progress->setMaximum(100);
+  progress->hide();
+  statusBar()->addPermanentWidget(progress);
 
   viewer = new MyViewer(this);
+  connect(viewer, SIGNAL(startComputation(QString)), this, SLOT(startComputation(QString)));
+  connect(viewer, SIGNAL(midComputation(int)), this, SLOT(midComputation(int)));
+  connect(viewer, SIGNAL(endComputation()), this, SLOT(endComputation()));
   setCentralWidget(viewer);
 
   /////////////////////////
@@ -133,4 +142,24 @@ void MyWindow::setRange()
     viewer->setMeanMax(sb2->value());
     viewer->updateGL();
   }
+}
+
+void MyWindow::startComputation(QString message)
+{
+  statusBar()->showMessage(message);
+  progress->setValue(0);
+  progress->show();
+  parent->processEvents(QEventLoop::ExcludeUserInputEvents);
+}
+
+void MyWindow::midComputation(int percent)
+{
+  progress->setValue(percent);
+  parent->processEvents(QEventLoop::ExcludeUserInputEvents);
+}
+
+void MyWindow::endComputation()
+{
+  progress->hide();
+  statusBar()->clearMessage();
 }

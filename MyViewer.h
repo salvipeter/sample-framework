@@ -21,6 +21,11 @@ public:
   inline void setMeanMax(double max);
   bool openMesh(std::string const &filename);
 
+signals:
+  void startComputation(QString message);
+  void midComputation(int percent);
+  void endComputation();
+
 protected:
   virtual void init();
   virtual void draw();
@@ -45,8 +50,9 @@ private:
 
   inline Vector halfedgeVector(MyMesh::HalfedgeHandle const &h) const;
   void updateMeanMinMax();
-  void updateMeanCurvature();
+  void updateMeanCurvature(bool update_min_max = true);
   void meanMapColor(double d, double *color) const;
+  void fairMesh();
 
   MyMesh mesh;
   double mean_min, mean_max;
