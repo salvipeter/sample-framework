@@ -12,7 +12,7 @@
 MyViewer::MyViewer(QWidget *parent) :
   QGLViewer(parent),
   mean_min(0.0), mean_max(0.0), cutoff_ratio(0.05),
-  show_mean(false), show_solid(true), show_wireframe(false)
+  show_solid(true), show_wireframe(false), coloring(COLOR_PLAIN)
 {
   setSelectRegionWidth(5);
   setSelectRegionHeight(5);
@@ -20,6 +20,7 @@ MyViewer::MyViewer(QWidget *parent) :
 
 MyViewer::~MyViewer()
 {
+  glDeleteTextures(1, &isophote_texture);
 }
 
 void MyViewer::updateMeanMinMax()
@@ -116,6 +117,7 @@ void MyViewer::fairMesh()
     emit midComputation(i * 10);
   }
   mesh.update_face_normals();
+  mesh.update_vertex_normals();
   updateMeanCurvature(false);
   emit endComputation();
 }
@@ -124,8 +126,8 @@ bool MyViewer::openMesh(std::string const &filename)
 {
   if(!OpenMesh::IO::read_mesh(mesh, filename) || mesh.n_vertices() == 0)
     return false;
-  mesh.request_face_normals();
-  mesh.update_face_normals();
+  mesh.request_face_normals(); mesh.request_vertex_normals();
+  mesh.update_face_normals();  mesh.update_vertex_normals();
 
   updateMeanCurvature();
 
@@ -148,6 +150,15 @@ bool MyViewer::openMesh(std::string const &filename)
 void MyViewer::init()
 {
   glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 1);
+  QImage img(":/isophotes.png");
+  glGenTextures(1, &isophote_texture);
+  glBindTexture(GL_TEXTURE_2D, isophote_texture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, img.width(), img.height(), 0, GL_BGRA,
+               GL_UNSIGNED_BYTE, img.convertToFormat(QImage::Format_ARGB32).constBits());
 }
 
 void MyViewer::draw()
@@ -161,18 +172,37 @@ void MyViewer::draw()
   glPolygonOffset(1, 1);
 
   std::vector<double> color(3, 1.0);
-  if(show_solid || show_wireframe)
+  if(show_solid || show_wireframe) {
+    if(coloring == COLOR_PLAIN)
+      glColor3dv(&color[0]);
+    else if(coloring == COLOR_ISOPHOTES) {
+      glBindTexture(GL_TEXTURE_2D, isophote_texture);
+      glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+      glEnable(GL_TEXTURE_2D);
+      glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+      glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+      glEnable(GL_TEXTURE_GEN_S);
+      glEnable(GL_TEXTURE_GEN_T);
+    }
     for(MyMesh::ConstFaceIter i = mesh.faces_begin(), ie = mesh.faces_end(); i != ie; ++i) {
       glBegin(GL_POLYGON);
-      glNormal3fv(mesh.normal(i).data());
       for(MyMesh::ConstFaceVertexIter j(mesh, i); (bool)j; ++j) {
-        if(show_mean)
+        if(coloring == COLOR_MEAN) {
           meanMapColor(mesh.data(j).mean, &color[0]);
-        glColor3dv(&color[0]);
+          glColor3dv(&color[0]);
+        }
+        glNormal3fv(mesh.normal(j).data());
         glVertex3fv(mesh.point(j).data());
       }
       glEnd();
     }
+    if(coloring == COLOR_ISOPHOTES) {
+      glDisable(GL_TEXTURE_GEN_S);
+      glDisable(GL_TEXTURE_GEN_T);
+      glDisable(GL_TEXTURE_2D);
+      glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    }
+  }
 
   if(show_solid && show_wireframe) {
     glPolygonMode(GL_FRONT, GL_LINE);
@@ -227,8 +257,16 @@ void MyViewer::keyPressEvent(QKeyEvent *e)
 {
   if(e->modifiers() == Qt::NoModifier)
     switch(e->key()) {
+    case Qt::Key_P:
+      coloring = COLOR_PLAIN;
+      updateGL();
+      break;
     case Qt::Key_M:
-      show_mean = !show_mean;
+      coloring = COLOR_MEAN;
+      updateGL();
+      break;
+    case Qt::Key_I:
+      coloring = COLOR_ISOPHOTES;
       updateGL();
       break;
     case Qt::Key_S:
@@ -272,7 +310,9 @@ QString MyViewer::helpString() const
                "parametric surfaces, etc.</p>"
                "<p>The following hotkeys are available:</p>"
                "<ul>"
-               "<li>&nbsp;M: Toggle mean map</li>"
+               "<li>&nbsp;P: Set plain map (no coloring)</li>"
+               "<li>&nbsp;M: Set mean curvature map</li>"
+               "<li>&nbsp;I: Set isophote line map</li>"
                "<li>&nbsp;S: Toggle solid (filled polygon) visualization</li>"
                "<li>&nbsp;W: Toggle wireframe visualization</li>"
                "<li>&nbsp;F: Fair mesh</li>"

@@ -57,7 +57,9 @@ private:
   MyMesh mesh;
   double mean_min, mean_max;
   double cutoff_ratio;
-  bool show_mean, show_solid, show_wireframe;
+  bool show_solid, show_wireframe;
+  enum { COLOR_PLAIN, COLOR_MEAN, COLOR_ISOPHOTES } coloring;
+  GLuint isophote_texture;
   MyMesh::ConstVertexIter selected;
 };
 
