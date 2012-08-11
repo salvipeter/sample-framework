@@ -5,6 +5,8 @@
 #include <QGLViewer/qglviewer.h>
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
 
+using qglviewer::Vec;
+
 class MyViewer : public QGLViewer
 {
   Q_OBJECT
@@ -55,6 +57,7 @@ private:
   void fairMesh();
   void drawAxes() const;
   void drawAxesWithNames() const;
+  Vec intersectLines(Vec const &ap, Vec const &ad, Vec const &bp, Vec const &bd) const;
 
   MyMesh mesh;
   double mean_min, mean_max;
@@ -67,8 +70,8 @@ private:
     bool shown;
     float size;
     int selected_axis;
-    GLfloat position[3], original_pos[3];
-    qglviewer::Vec grabbed_pos;
+    GLfloat position[3];
+    Vec grabbed_pos, original_pos;
   } axes;
 };
 

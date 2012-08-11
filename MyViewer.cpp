@@ -351,16 +351,32 @@ void MyViewer::keyPressEvent(QKeyEvent *e)
     QGLViewer::keyPressEvent(e);
 }
 
+Vec MyViewer::intersectLines(Vec const &ap, Vec const &ad, Vec const &bp, Vec const &bd) const
+{
+  // This can be solved analitically as well (may be faster)
+  float min = sceneRadius();
+  Vec result;
+  for(float t = 0.0, te = sceneRadius(), td = te / 100.0; t < te; t += td) {
+    Vec p = bp + t * bd;
+    Vec q = ap + ad * ((p - ap) * ad);
+    float d = (p - q).norm();
+    if(d < min) {
+      min = d;
+      result = q;
+    }
+  }
+  return result;
+}
+
 void MyViewer::mouseMoveEvent(QMouseEvent *e)
 {
   if(axes.shown && selectedName() != -1 &&
      e->modifiers() & Qt::ShiftModifier && e->buttons() & Qt::LeftButton) {
-    bool found;
-    Vec p = camera()->pointUnderPixel(e->pos(), found);
-    float d = (p - axes.grabbed_pos).norm() / 2.0;
     Vec axis = Vec(axes.selected_axis == 0, axes.selected_axis == 1, axes.selected_axis == 2);
-    if((p - axes.grabbed_pos) * axis < 0)
-      d *= -1.0;
+    Vec from, dir;
+    camera()->convertClickToLine(e->pos(), from, dir);
+    Vec p = intersectLines(axes.grabbed_pos, axis, from, dir);
+    float d = (p - axes.grabbed_pos) * axis;
     axes.position[axes.selected_axis] = axes.original_pos[axes.selected_axis] + d;
     mesh.set_point(selected, MyMesh::Point(axes.position[0],
                                            axes.position[1],
