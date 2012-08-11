@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <vector>
 
@@ -9,6 +10,8 @@
 
 #include "MyViewer.h"
 
+using qglviewer::Vec;
+
 MyViewer::MyViewer(QWidget *parent) :
   QGLViewer(parent),
   mean_min(0.0), mean_max(0.0), cutoff_ratio(0.05),
@@ -16,6 +19,7 @@ MyViewer::MyViewer(QWidget *parent) :
 {
   setSelectRegionWidth(5);
   setSelectRegionHeight(5);
+  axes.shown = false;
 }
 
 MyViewer::~MyViewer()
@@ -138,8 +142,8 @@ bool MyViewer::openMesh(std::string const &filename)
     box_min.minimize(mesh.point(i));
     box_max.maximize(mesh.point(i));
   }
-  camera()->setSceneBoundingBox(qglviewer::Vec(box_min[0], box_min[1], box_min[2]),
-                                qglviewer::Vec(box_max[0], box_max[1], box_max[2]));
+  camera()->setSceneBoundingBox(Vec(box_min[0], box_min[1], box_min[2]),
+                                Vec(box_max[0], box_max[1], box_max[2]));
   camera()->showEntireScene();
 
   setSelectedName(-1);
@@ -217,40 +221,99 @@ void MyViewer::draw()
     glEnable(GL_LIGHTING);
   }
 
-  if(show_wireframe && selectedName() != -1) {
-    glDisable(GL_LIGHTING);
-    glEnable(GL_POINT_SMOOTH);
-    glPointSize(10.0);
-    glColor3d(0.4, 0.4, 1.0);
-    glBegin(GL_POINTS);
-    glVertex3fv(mesh.point(selected).data());
-    glEnd();
-    glEnable(GL_LIGHTING);
-  }
+  if(axes.shown)
+    drawAxes();
+}
+
+void MyViewer::drawAxes() const
+{
+  glDisable(GL_LIGHTING);
+  glLineWidth(5.0);
+  glBegin(GL_LINES);
+  glColor3f(1.0, 0.0, 0.0);
+  glVertex3f(axes.position[0], axes.position[1], axes.position[2]);
+  glVertex3f(axes.position[0] + axes.size, axes.position[1], axes.position[2]);
+  glColor3f(0.0, 1.0, 0.0);
+  glVertex3f(axes.position[0], axes.position[1], axes.position[2]);
+  glVertex3f(axes.position[0], axes.position[1] + axes.size, axes.position[2]);
+  glColor3f(0.0, 0.0, 1.0);
+  glVertex3f(axes.position[0], axes.position[1], axes.position[2]);
+  glVertex3f(axes.position[0], axes.position[1], axes.position[2] + axes.size);
+  glEnd();
+  glLineWidth(1.0);
+  glEnable(GL_LIGHTING);
 }
 
 void MyViewer::drawWithNames()
 {
-  if(!show_wireframe)
-    return;
+  if(axes.shown)
+    drawAxesWithNames();
+  else {
+    if(!show_wireframe)
+      return;
 
-  int j = 0;
-  for(MyMesh::ConstVertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i) {
-    glPushName(j++);
-    glRasterPos3fv(mesh.point(i).data());
-    glPopName();
+    int j = 0;
+    for(MyMesh::ConstVertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i) {
+      glPushName(j++);
+      glRasterPos3fv(mesh.point(i).data());
+      glPopName();
+    }
   }
 }
 
-void MyViewer::postSelection(const QPoint &)
+void MyViewer::drawAxesWithNames() const
+{
+  glLineWidth(5.0);
+  glPushName(0);
+  glBegin(GL_LINES);
+  glVertex3f(axes.position[0], axes.position[1], axes.position[2]);
+  glVertex3f(axes.position[0] + axes.size, axes.position[1], axes.position[2]);
+  glEnd();
+  glPopName();
+  glPushName(1);
+  glBegin(GL_LINES);
+  glVertex3f(axes.position[0], axes.position[1], axes.position[2]);
+  glVertex3f(axes.position[0], axes.position[1] + axes.size, axes.position[2]);
+  glEnd();
+  glPopName();
+  glPushName(2);
+  glBegin(GL_LINES);
+  glVertex3f(axes.position[0], axes.position[1], axes.position[2]);
+  glVertex3f(axes.position[0], axes.position[1], axes.position[2] + axes.size);
+  glEnd();
+  glPopName();
+  glLineWidth(1.0);
+}
+
+void MyViewer::postSelection(const QPoint &p)
 {
   int sel = selectedName();
-  if(sel == -1)
+  if(sel == -1) {
+    axes.shown = false;
     return;
+  }
 
-  MyMesh::ConstVertexIter i = mesh.vertices_begin();
-  for(int j = 0; j != sel; ++i, ++j);
-  selected = i;
+  if(axes.shown) {
+    axes.selected_axis = sel;
+    bool found;
+    axes.grabbed_pos = camera()->pointUnderPixel(p, found);
+    axes.original_pos[0] = axes.position[0];
+    axes.original_pos[1] = axes.position[1];
+    axes.original_pos[2] = axes.position[2];
+    if(!found)
+      axes.shown = false;
+  } else {
+    MyMesh::ConstVertexIter i = mesh.vertices_begin();
+    for(int j = 0; j != sel; ++i, ++j);
+    selected = i;
+    axes.position[0] = mesh.point(i).data()[0];
+    axes.position[1] = mesh.point(i).data()[1];
+    axes.position[2] = mesh.point(i).data()[2];
+    Vec const q1 = camera()->worldCoordinatesOf(Vec(0, 0, 0));
+    Vec const q2 = camera()->worldCoordinatesOf(Vec(1.0, 1.0, 0));
+    axes.size = std::sqrt(q1*q1+q2*q2) / 10.0;
+    axes.shown = true;
+  }
 }
 
 void MyViewer::keyPressEvent(QKeyEvent *e)
@@ -290,13 +353,19 @@ void MyViewer::keyPressEvent(QKeyEvent *e)
 
 void MyViewer::mouseMoveEvent(QMouseEvent *e)
 {
-  if(selectedName() != -1 && e->modifiers() & Qt::ShiftModifier && e->buttons() & Qt::LeftButton) {
+  if(axes.shown && selectedName() != -1 &&
+     e->modifiers() & Qt::ShiftModifier && e->buttons() & Qt::LeftButton) {
     bool found;
-    qglviewer::Vec p = camera()->pointUnderPixel(e->pos(), found);
-    if(found) {
-      mesh.set_point(selected, MyMesh::Point(p[0], p[1], p[2]));
-      updateGL();
-    }
+    Vec p = camera()->pointUnderPixel(e->pos(), found);
+    float d = (p - axes.grabbed_pos).norm() / 2.0;
+    Vec axis = Vec(axes.selected_axis == 0, axes.selected_axis == 1, axes.selected_axis == 2);
+    if((p - axes.grabbed_pos) * axis < 0)
+      d *= -1.0;
+    axes.position[axes.selected_axis] = axes.original_pos[axes.selected_axis] + d;
+    mesh.set_point(selected, MyMesh::Point(axes.position[0],
+                                           axes.position[1],
+                                           axes.position[2]));
+    updateGL();
   } else
     QGLViewer::mouseMoveEvent(e);
 }
@@ -319,8 +388,8 @@ QString MyViewer::helpString() const
                "</ul>"
                "<p>There is also a simple selection and movement interface, enabled "
                "only when the wireframe is displayed: a mesh vertex can be selected "
-               "by shift-clicking, and it can be moved by shift-dragging. "
-               "The vertex always remains on the original mesh.</p>"
+               "by shift-clicking, and it can be moved by shift-dragging one of the "
+               "displayed axes.</p>"
                "<p>This is evidently of little practical use; it serves "
                "only to demonstrate the selection and movement process.</p>"
                "<p>Note that libQGLViewer is furnished with a lot of useful features, "

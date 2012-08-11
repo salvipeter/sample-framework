@@ -1,0 +1,10 @@
+syntax: glob
+
+*~
+.\#*
+*.o
+*.stl
+*.ply
+moc_*
+qrc_*
+Makefile

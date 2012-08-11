@@ -53,6 +53,8 @@ private:
   void updateMeanCurvature(bool update_min_max = true);
   void meanMapColor(double d, double *color) const;
   void fairMesh();
+  void drawAxes() const;
+  void drawAxesWithNames() const;
 
   MyMesh mesh;
   double mean_min, mean_max;
@@ -61,6 +63,13 @@ private:
   enum { COLOR_PLAIN, COLOR_MEAN, COLOR_ISOPHOTES } coloring;
   GLuint isophote_texture;
   MyMesh::ConstVertexIter selected;
+  struct ModificationAxes {
+    bool shown;
+    float size;
+    int selected_axis;
+    GLfloat position[3], original_pos[3];
+    qglviewer::Vec grabbed_pos;
+  } axes;
 };
 
 #include "MyViewer.hpp"
