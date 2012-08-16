@@ -354,9 +354,9 @@ void MyViewer::keyPressEvent(QKeyEvent *e)
 Vec MyViewer::intersectLines(Vec const &ap, Vec const &ad, Vec const &bp, Vec const &bd) const
 {
   // This can be solved analitically as well (may be faster)
-  float min = sceneRadius();
+  float min = 2 * sceneRadius();
   Vec result;
-  for(float t = 0.0, te = sceneRadius(), td = te / 100.0; t < te; t += td) {
+  for(float t = 0.0, te = 2 * sceneRadius(), td = te / 100.0; t < te; t += td) {
     Vec p = bp + t * bd;
     Vec q = ap + ad * ((p - ap) * ad);
     float d = (p - q).norm();
