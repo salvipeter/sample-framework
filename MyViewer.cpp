@@ -10,6 +10,11 @@
 
 #include "MyViewer.h"
 
+#ifdef _WIN32
+#define GL_CLAMP_TO_EDGE 0x812F
+#define GL_BGRA 0x80E1
+#endif
+
 using qglviewer::Vec;
 
 MyViewer::MyViewer(QWidget *parent) :
@@ -162,7 +167,7 @@ void MyViewer::init()
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, img.width(), img.height(), 0, GL_BGRA,
-               GL_UNSIGNED_BYTE, img.convertToFormat(QImage::Format_ARGB32).constBits());
+               GL_UNSIGNED_BYTE, img.convertToFormat(QImage::Format_ARGB32).bits());
 }
 
 void MyViewer::draw()
