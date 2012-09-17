@@ -152,6 +152,8 @@ bool MyViewer::openMesh(std::string const &filename)
   camera()->showEntireScene();
 
   setSelectedName(-1);
+  axes.shown = false;
+
   updateGL();
   return true;
 }
