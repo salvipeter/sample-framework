@@ -235,6 +235,7 @@ void MyViewer::draw()
 void MyViewer::drawAxes() const
 {
   glDisable(GL_LIGHTING);
+  glDisable(GL_DEPTH_TEST);
   glLineWidth(5.0);
   glBegin(GL_LINES);
   glColor3f(1.0, 0.0, 0.0);
@@ -248,6 +249,7 @@ void MyViewer::drawAxes() const
   glVertex3f(axes.position[0], axes.position[1], axes.position[2] + axes.size);
   glEnd();
   glLineWidth(1.0);
+  glEnable(GL_DEPTH_TEST);
   glEnable(GL_LIGHTING);
 }
 
