@@ -51,21 +51,18 @@ void MyViewer::updateMeanMinMax()
 
 void MyViewer::updateMeanCurvature(bool update_min_max)
 {
-  for(MyMesh::ConstFaceIter i = mesh.faces_begin(), ie = mesh.faces_end(); i != ie; ++i)
-    mesh.data(i).area = -1;
+  for(MyMesh::ConstFaceIter i = mesh.faces_begin(), ie = mesh.faces_end(); i != ie; ++i) {
+    MyMesh::HalfedgeHandle h1 = mesh.halfedge_handle((OpenMesh::FaceHandle const &)i);
+    MyMesh::HalfedgeHandle h2 = mesh.next_halfedge_handle(h1);
+    mesh.data(i).area = (halfedgeVector(h1) % halfedgeVector(h2)).norm() / 2.0;
+  }
 
   // Compute triangle strip areas
   for(MyMesh::VertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i) {
     mesh.data(i).area = 0;
     mesh.data(i).mean = 0;
-    for(MyMesh::ConstVertexFaceIter j(mesh, i); (bool)j; ++j) {
-      if(mesh.data(j).area == -1) {
-        MyMesh::HalfedgeHandle h1 = mesh.halfedge_handle((OpenMesh::FaceHandle const &)j);
-        MyMesh::HalfedgeHandle h2 = mesh.next_halfedge_handle(h1);
-        mesh.data(j).area = (halfedgeVector(h1) % halfedgeVector(h2)).norm() / 2.0;
-      }
+    for(MyMesh::ConstVertexFaceIter j(mesh, i); (bool)j; ++j)
       mesh.data(i).area += mesh.data(j).area;
-    }
   }
 
   // Compute mean values using normal difference angles
