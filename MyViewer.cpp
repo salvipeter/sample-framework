@@ -319,6 +319,7 @@ void MyViewer::postSelection(const QPoint &p)
     Vec const q2 = camera()->worldCoordinatesOf(Vec(1.0, 1.0, 0));
     axes.size = std::sqrt(q1*q1+q2*q2) / 10.0;
     axes.shown = true;
+    axes.selected_axis = -1;
   }
 }
 
@@ -370,7 +371,7 @@ Vec MyViewer::intersectLines(Vec const &ap, Vec const &ad, Vec const &bp, Vec co
 
 void MyViewer::mouseMoveEvent(QMouseEvent *e)
 {
-  if(axes.shown && selectedName() != -1 &&
+  if(axes.shown && axes.selected_axis >= 0 &&
      e->modifiers() & Qt::ShiftModifier && e->buttons() & Qt::LeftButton) {
     Vec axis = Vec(axes.selected_axis == 0, axes.selected_axis == 1, axes.selected_axis == 2);
     Vec from, dir;
