@@ -231,23 +231,14 @@ void MyViewer::draw()
 
 void MyViewer::drawAxes() const
 {
-  glDisable(GL_LIGHTING);
-  glDisable(GL_DEPTH_TEST);
-  glLineWidth(5.0);
-  glBegin(GL_LINES);
+  Vec const p(axes.position[0], axes.position[1], axes.position[2]);
   glColor3f(1.0, 0.0, 0.0);
-  glVertex3f(axes.position[0], axes.position[1], axes.position[2]);
-  glVertex3f(axes.position[0] + axes.size, axes.position[1], axes.position[2]);
+  drawArrow(p, p + Vec(axes.size, 0.0, 0.0), axes.size / 50.0);
   glColor3f(0.0, 1.0, 0.0);
-  glVertex3f(axes.position[0], axes.position[1], axes.position[2]);
-  glVertex3f(axes.position[0], axes.position[1] + axes.size, axes.position[2]);
+  drawArrow(p, p + Vec(0.0, axes.size, 0.0), axes.size / 50.0);
   glColor3f(0.0, 0.0, 1.0);
-  glVertex3f(axes.position[0], axes.position[1], axes.position[2]);
-  glVertex3f(axes.position[0], axes.position[1], axes.position[2] + axes.size);
+  drawArrow(p, p + Vec(0.0, 0.0, axes.size), axes.size / 50.0);
   glEnd();
-  glLineWidth(1.0);
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_LIGHTING);
 }
 
 void MyViewer::drawWithNames()
@@ -269,26 +260,16 @@ void MyViewer::drawWithNames()
 
 void MyViewer::drawAxesWithNames() const
 {
-  glLineWidth(5.0);
+  Vec const p(axes.position[0], axes.position[1], axes.position[2]);
   glPushName(0);
-  glBegin(GL_LINES);
-  glVertex3f(axes.position[0], axes.position[1], axes.position[2]);
-  glVertex3f(axes.position[0] + axes.size, axes.position[1], axes.position[2]);
-  glEnd();
+  drawArrow(p, p + Vec(axes.size, 0.0, 0.0), axes.size / 50.0);
   glPopName();
   glPushName(1);
-  glBegin(GL_LINES);
-  glVertex3f(axes.position[0], axes.position[1], axes.position[2]);
-  glVertex3f(axes.position[0], axes.position[1] + axes.size, axes.position[2]);
-  glEnd();
+  drawArrow(p, p + Vec(0.0, axes.size, 0.0), axes.size / 50.0);
   glPopName();
   glPushName(2);
-  glBegin(GL_LINES);
-  glVertex3f(axes.position[0], axes.position[1], axes.position[2]);
-  glVertex3f(axes.position[0], axes.position[1], axes.position[2] + axes.size);
-  glEnd();
+  drawArrow(p, p + Vec(0.0, 0.0, axes.size), axes.size / 50.0);
   glPopName();
-  glLineWidth(1.0);
 }
 
 void MyViewer::postSelection(const QPoint &p)
