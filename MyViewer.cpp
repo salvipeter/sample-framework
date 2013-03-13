@@ -296,9 +296,11 @@ void MyViewer::postSelection(const QPoint &p)
     axes.position[0] = mesh.point(i).data()[0];
     axes.position[1] = mesh.point(i).data()[1];
     axes.position[2] = mesh.point(i).data()[2];
-    Vec const q1 = camera()->worldCoordinatesOf(Vec(0, 0, 0));
-    Vec const q2 = camera()->worldCoordinatesOf(Vec(1.0, 1.0, 0));
-    axes.size = std::sqrt(q1*q1+q2*q2) / 10.0;
+    Vec const pos(axes.position[0], axes.position[1], axes.position[2]);
+    double const depth = camera()->projectedCoordinatesOf(pos)[2];
+    Vec const q1 = camera()->unprojectedCoordinatesOf(Vec(0.0, 0.0, depth));
+    Vec const q2 = camera()->unprojectedCoordinatesOf(Vec(width(), height(), depth));
+    axes.size = (q1-q2).norm() / 10.0;
     axes.shown = true;
     axes.selected_axis = -1;
   }
