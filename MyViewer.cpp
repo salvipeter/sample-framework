@@ -3,7 +3,7 @@
 #include <iostream>
 #include <vector>
 
-#include <QKeyEvent>
+#include <QtGui/QKeyEvent>
 
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <OpenMesh/Tools/Smoother/JacobiLaplaceSmootherT.hh>

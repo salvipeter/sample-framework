@@ -1,17 +1,6 @@
 #include <limits>
 
-#include <QApplication>
-#include <QDoubleSpinBox>
-#include <QFileDialog>
-#include <QGridLayout>
-#include <QHBoxLayout>
-#include <QLabel>
-#include <QMenuBar>
-#include <QMessageBox>
-#include <QProgressBar>
-#include <QPushButton>
-#include <QStatusBar>
-#include <QVBoxLayout>
+#include <QtWidgets>
 
 #include "MyWindow.h"
 
