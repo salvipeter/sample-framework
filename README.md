@@ -14,9 +14,7 @@ Dependencies:
 
 ## Linux
 
-```
-qmake && make
-```
+    qmake && make
 
 Assumes that:
 
@@ -40,26 +38,20 @@ If any of the above is not satisfied, edit sample-framework.pro accordingly.
    Compile a release version of the library.
 
 1. Now open sample-framework.pro, and insert the following line:
-```
-INCLUDEPATH += "c:\Program Files\libQGLViewer"
-```
+        INCLUDEPATH += "c:\Program Files\libQGLViewer"
   (using the correct path on your system, of course).
 
 1. Download the source package for OpenMesh, and put it somewhere,
    e.g. at c:\Program Files\OpenMesh. Open the solution file
    in Visual Studio and build a release version of the core library.
    Then open sample-framework.pro, and insert the following line:
-```
-INCLUDEPATH += "c:\Program Files\OpenMesh\src"
-```
+        INCLUDEPATH += "c:\Program Files\OpenMesh\src"
   (using the correct path on your system, of course).
 
 1. The `LIBS` variable of sample-framework.pro should be updated as well,
    replace the `LIBS` line with the following two:
-```
-LIBS += -L"c:\Program Files\libQGLViewer\QGLViewer\release" -lQGLViewer2
-LIBS += -L"c:\Program Files\OpenMesh\lib" -llibOpenMeshCore
-```
+        LIBS += -L"c:\Program Files\libQGLViewer\QGLViewer\release" -lQGLViewer2
+        LIBS += -L"c:\Program Files\OpenMesh\lib" -llibOpenMeshCore
 
 1. Open Visual Studio, in the Qt menu select "Open Qt project file (*.pro)",
    and open sample-framework.pro.
