@@ -41,7 +41,7 @@ void MyViewer::updateMeanMinMax()
   std::vector<double> mean;
   mean.reserve(n);
   for(MyMesh::VertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i)  
-    mean.push_back(mesh.data(i).mean);
+    mean.push_back(mesh.data(*i).mean);
 
   std::sort(mean.begin(), mean.end());
   size_t k = (double)n * cutoff_ratio;
@@ -52,25 +52,25 @@ void MyViewer::updateMeanMinMax()
 void MyViewer::updateMeanCurvature(bool update_min_max)
 {
   for(MyMesh::ConstFaceIter i = mesh.faces_begin(), ie = mesh.faces_end(); i != ie; ++i) {
-    MyMesh::HalfedgeHandle h1 = mesh.halfedge_handle((OpenMesh::FaceHandle const &)i);
+    MyMesh::HalfedgeHandle h1 = mesh.halfedge_handle(*i);
     MyMesh::HalfedgeHandle h2 = mesh.next_halfedge_handle(h1);
-    mesh.data(i).area = (halfedgeVector(h1) % halfedgeVector(h2)).norm() / 2.0;
+    mesh.data(*i).area = (halfedgeVector(h1) % halfedgeVector(h2)).norm() / 2.0;
   }
 
   // Compute triangle strip areas
   for(MyMesh::VertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i) {
-    mesh.data(i).area = 0;
-    mesh.data(i).mean = 0;
-    for(MyMesh::ConstVertexFaceIter j(mesh, i); (bool)j; ++j)
-      mesh.data(i).area += mesh.data(j).area;
+    mesh.data(*i).area = 0;
+    mesh.data(*i).mean = 0;
+    for(MyMesh::ConstVertexFaceIter j(mesh, *i); j.is_valid(); ++j)
+      mesh.data(*i).area += mesh.data(*j).area;
   }
 
   // Compute mean values using normal difference angles
   for(MyMesh::VertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i) {
-    for(MyMesh::ConstVertexEdgeIter j(mesh, i); (bool)j; ++j) {
+    for(MyMesh::ConstVertexEdgeIter j(mesh, *i); j.is_valid(); ++j) {
       double angle;
-      MyMesh::HalfedgeHandle h1 = mesh.halfedge_handle(j, 0);
-      MyMesh::HalfedgeHandle h2 = mesh.halfedge_handle(j, 1);
+      MyMesh::HalfedgeHandle h1 = mesh.halfedge_handle(*j, 0);
+      MyMesh::HalfedgeHandle h2 = mesh.halfedge_handle(*j, 1);
       Vector v = halfedgeVector(h1);
       if(mesh.is_boundary(h1) || mesh.is_boundary(h2))
         angle = 0.0;
@@ -80,9 +80,9 @@ void MyViewer::updateMeanCurvature(bool update_min_max)
         angle = acos(std::min(std::max(n1 | n2, -1.0f), 1.0f));
         angle *= ((n1 % n2) | v) >= 0.0 ? 1.0 : -1.0;
       }
-      mesh.data(i).mean += angle * v.norm();
+      mesh.data(*i).mean += angle * v.norm();
     }
-    mesh.data(i).mean *= 3.0 / 4.0 / mesh.data(i).area;
+    mesh.data(*i).mean *= 3.0 / 4.0 / mesh.data(*i).area;
   }
 
   if(update_min_max)
@@ -139,10 +139,10 @@ bool MyViewer::openMesh(std::string const &filename)
 
   // Set camera on the model
   MyMesh::Point box_min, box_max;
-  box_min = box_max = mesh.point(mesh.vertices_begin());
+  box_min = box_max = mesh.point(*mesh.vertices_begin());
   for(MyMesh::ConstVertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i) {
-    box_min.minimize(mesh.point(i));
-    box_max.maximize(mesh.point(i));
+    box_min.minimize(mesh.point(*i));
+    box_max.maximize(mesh.point(*i));
   }
   camera()->setSceneBoundingBox(Vec(box_min[0], box_min[1], box_min[2]),
                                 Vec(box_max[0], box_max[1], box_max[2]));
@@ -194,13 +194,13 @@ void MyViewer::draw()
     }
     for(MyMesh::ConstFaceIter i = mesh.faces_begin(), ie = mesh.faces_end(); i != ie; ++i) {
       glBegin(GL_POLYGON);
-      for(MyMesh::ConstFaceVertexIter j(mesh, i); (bool)j; ++j) {
+      for(MyMesh::ConstFaceVertexIter j(mesh, *i); j.is_valid(); ++j) {
         if(coloring == COLOR_MEAN) {
-          meanMapColor(mesh.data(j).mean, &color[0]);
+          meanMapColor(mesh.data(*j).mean, &color[0]);
           glColor3dv(&color[0]);
         }
-        glNormal3fv(mesh.normal(j).data());
-        glVertex3fv(mesh.point(j).data());
+        glNormal3fv(mesh.normal(*j).data());
+        glVertex3fv(mesh.point(*j).data());
       }
       glEnd();
     }
@@ -218,8 +218,8 @@ void MyViewer::draw()
     glDisable(GL_LIGHTING);
     for(MyMesh::ConstFaceIter i = mesh.faces_begin(), ie = mesh.faces_end(); i != ie; ++i) {
       glBegin(GL_POLYGON);
-      for(MyMesh::ConstFaceVertexIter j(mesh, i); (bool)j; ++j)
-        glVertex3fv(mesh.point(j).data());
+      for(MyMesh::ConstFaceVertexIter j(mesh, *i); j.is_valid(); ++j)
+        glVertex3fv(mesh.point(*j).data());
       glEnd();
     }
     glEnable(GL_LIGHTING);
@@ -252,7 +252,7 @@ void MyViewer::drawWithNames()
     int j = 0;
     for(MyMesh::ConstVertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i) {
       glPushName(j++);
-      glRasterPos3fv(mesh.point(i).data());
+      glRasterPos3fv(mesh.point(*i).data());
       glPopName();
     }
   }
@@ -293,9 +293,9 @@ void MyViewer::postSelection(const QPoint &p)
     MyMesh::ConstVertexIter i = mesh.vertices_begin();
     for(int j = 0; j != sel; ++i, ++j);
     selected = i;
-    axes.position[0] = mesh.point(i).data()[0];
-    axes.position[1] = mesh.point(i).data()[1];
-    axes.position[2] = mesh.point(i).data()[2];
+    axes.position[0] = mesh.point(*i).data()[0];
+    axes.position[1] = mesh.point(*i).data()[1];
+    axes.position[2] = mesh.point(*i).data()[2];
     Vec const pos(axes.position[0], axes.position[1], axes.position[2]);
     double const depth = camera()->projectedCoordinatesOf(pos)[2];
     Vec const q1 = camera()->unprojectedCoordinatesOf(Vec(0.0, 0.0, depth));
@@ -362,9 +362,9 @@ void MyViewer::mouseMoveEvent(QMouseEvent *e)
     Vec p = intersectLines(axes.grabbed_pos, axis, from, dir);
     float d = (p - axes.grabbed_pos) * axis;
     axes.position[axes.selected_axis] = axes.original_pos[axes.selected_axis] + d;
-    mesh.set_point(selected, MyMesh::Point(axes.position[0],
-                                           axes.position[1],
-                                           axes.position[2]));
+    mesh.set_point(*selected, MyMesh::Point(axes.position[0],
+                                            axes.position[1],
+                                            axes.position[2]));
     updateGL();
   } else
     QGLViewer::mouseMoveEvent(e);
