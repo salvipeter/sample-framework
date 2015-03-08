@@ -108,7 +108,7 @@ void MyWindow::setRange()
   QPushButton *cancel = new QPushButton(tr("Cancel"));
   QPushButton *ok = new QPushButton(tr("Ok"));
 
-  double max = std::numeric_limits<double>::max();
+  double max = 1000.0; // std::numeric_limits<double>::max();
   sb1->setDecimals(5);                 sb2->setDecimals(5);
   sb1->setRange(-max, 0.0);            sb2->setRange(0.0, max);
   sb1->setSingleStep(0.01);            sb2->setSingleStep(0.01);
