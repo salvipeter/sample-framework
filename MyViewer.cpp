@@ -9,7 +9,9 @@
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <OpenMesh/Tools/Smoother/JacobiLaplaceSmootherT.hh>
 
+//#define BETTER_MEAN_WEIGHT
 #define BETTER_MEAN_CURVATURE
+
 #ifdef BETTER_MEAN_CURVATURE
 #include "Eigen/Eigenvalues"
 #include "Eigen/Geometry"
@@ -97,7 +99,7 @@ double MyViewer::voronoiWeight(MyViewer::MyMesh::HalfedgeHandle in_he) {
   double c = mesh.calc_edge_vector(mesh.next_halfedge_handle(in_he)).norm();
   double r = a / (2 * sin(alpha));
   auto area = [](double a, double b) { // Isosceles triangle
-    return 0.5 * std::pow(a, 2) * sqrt(std::pow(b / a, 2) - 0.25);
+    return 0.5 * std::pow(a, 2) * sqrt(std::max(std::pow(b / a, 2) - 0.25, 0.0));
   };
   return 0.5 * (area(b, r) + area(c, r));
 }
@@ -115,9 +117,23 @@ void MyViewer::updateMeanCurvature(bool update_min_max)
   for(MyMesh::VertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i) {
     mesh.data(*i).area = 0;
     mesh.data(*i).mean = 0;
+#ifndef BETTER_MEAN_WEIGHT
     for(MyMesh::ConstVertexFaceIter j(mesh, *i); j.is_valid(); ++j)
       mesh.data(*i).area += mesh.data(*j).area;
+    mesh.data(*i).area /= 3.0;
+#endif
   }
+
+#ifdef BETTER_MEAN_WEIGHT
+  for (MyMesh::ConstFaceIter i = mesh.faces_begin(), ie = mesh.faces_end(); i != ie; ++i) {
+    auto h0 = mesh.halfedge_handle(*i), h = h0;
+    do {
+      auto p = mesh.to_vertex_handle(h);
+      mesh.data(p).area += voronoiWeight(h);
+      h = mesh.next_halfedge_handle(h);
+    } while (h != h0);
+  }
+#endif
 
   // Compute mean values using normal difference angles
   for(MyMesh::VertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i) {
@@ -136,7 +152,7 @@ void MyViewer::updateMeanCurvature(bool update_min_max)
       }
       mesh.data(*i).mean += angle * v.norm();
     }
-    mesh.data(*i).mean *= 3.0 / 4.0 / mesh.data(*i).area;
+    mesh.data(*i).mean *= 0.25 / mesh.data(*i).area;
   }
 
   if(update_min_max)
