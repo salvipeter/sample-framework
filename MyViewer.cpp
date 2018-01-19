@@ -1,12 +1,21 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <map>
 #include <vector>
 
 #include <QtGui/QKeyEvent>
 
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <OpenMesh/Tools/Smoother/JacobiLaplaceSmootherT.hh>
+
+#define BETTER_MEAN_CURVATURE
+#ifdef BETTER_MEAN_CURVATURE
+#include "Eigen/Eigenvalues"
+#include "Eigen/Geometry"
+#include "Eigen/LU"
+#include "Eigen/SVD"
+#endif
 
 #include "MyViewer.h"
 
@@ -49,6 +58,51 @@ void MyViewer::updateMeanMinMax()
   mean_max = std::max(mean[n-k], 0.0);
 }
 
+void MyViewer::localSystem(MyViewer::Vector const &normal,
+                           MyViewer::Vector &u, MyViewer::Vector &v) {
+  // Generates an orthogonal (u,v) coordinate system in the plane defined by `normal`.
+  int maxi = 0, nexti = 1;
+  double max = fabs(normal[0]), next = fabs(normal[1]);
+  if (max < next) {
+    std::swap(max, next);
+    std::swap(maxi, nexti);
+  }
+  if (fabs(normal[2]) > max) {
+    nexti = maxi;
+    maxi = 2;
+  } else if (fabs(normal[2]) > next)
+    nexti = 2;
+
+  u.vectorize(0.0);
+  u[nexti] = -normal[maxi];
+  u[maxi] = normal[nexti];
+  u /= u.norm();
+  v = cross(normal, u);
+}
+
+double MyViewer::voronoiWeight(MyViewer::MyMesh::HalfedgeHandle in_he) {
+  // Returns the area of the triangle bounded by in_he that is closest
+  // to the vertex pointed to by in_he.
+
+  // If we are at point `A` with angle `alpha` and opposite edge length `a`,
+  // the circumradius `r` is
+  //   a / (2 * sin(alpha)),
+  // and the requested area is
+  //   0.5 * (area(b, r, r) + area(c, r, r)),
+  // where area(a, b, c) is the area of a triangle with edge length a, b, c.
+
+  double alpha = mesh.calc_sector_angle(in_he);
+  double a = mesh.calc_edge_vector(mesh.prev_halfedge_handle(in_he)).norm();
+  double b = mesh.calc_edge_vector(in_he).norm();
+  double c = mesh.calc_edge_vector(mesh.next_halfedge_handle(in_he)).norm();
+  double r = a / (2 * sin(alpha));
+  auto area = [](double a, double b) { // Isosceles triangle
+    return 0.5 * std::pow(a, 2) * sqrt(std::pow(b / a, 2) - 0.25);
+  };
+  return 0.5 * (area(b, r) + area(c, r));
+}
+
+#ifndef BETTER_MEAN_CURVATURE
 void MyViewer::updateMeanCurvature(bool update_min_max)
 {
   for(MyMesh::ConstFaceIter i = mesh.faces_begin(), ie = mesh.faces_end(); i != ie; ++i) {
@@ -88,6 +142,112 @@ void MyViewer::updateMeanCurvature(bool update_min_max)
   if(update_min_max)
     updateMeanMinMax();
 }
+#else // BETTER_MEAN_CURVATURE
+void MyViewer::updateMeanCurvature(bool update_min_max)
+{
+  // As in the paper
+  //   S. Rusinkiewicz, Estimating curvatures and their derivatives on triangle meshes.
+  //     3D Data Processing, Visualization and Transmission, IEEE, 2004.
+
+  // (e,f,g): 2nd principal form
+  // w: accumulated weight
+  std::map<MyMesh::VertexHandle, Vector> efgp;
+  std::map<MyMesh::VertexHandle, double> wp;
+
+  // Initial setup
+  for (MyMesh::ConstVertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i) {
+    efgp[*i].vectorize(0.0);
+    wp[*i] = 0.0;
+  }
+
+  for(MyMesh::ConstFaceIter i = mesh.faces_begin(), ie = mesh.faces_end(); i != ie; ++i) {
+    // Setup local edges, vertices and normals
+    auto h0 = mesh.halfedge_handle(*i);
+    auto h1 = mesh.next_halfedge_handle(h0);
+    auto h2 = mesh.next_halfedge_handle(h1);
+    Vector e0, e1, e2;
+    mesh.calc_edge_vector(h0, e0);
+    mesh.calc_edge_vector(h1, e1);
+    mesh.calc_edge_vector(h2, e2);
+    auto v0 = mesh.to_vertex_handle(h1);
+    auto v1 = mesh.to_vertex_handle(h2);
+    auto v2 = mesh.to_vertex_handle(h0);
+    auto n0 = mesh.normal(v0), n1 = mesh.normal(v1), n2 = mesh.normal(v2);
+
+    Vector n = mesh.normal(*i), u, v;
+    localSystem(n, u, v);
+
+    // Solve a LSQ equation for (e,f,g) of the face
+    Eigen::MatrixXd A(6, 3);
+    Eigen::VectorXd b(6);
+    A(0,0) = e0 | u; A(0,1) = e0 | v; A(0,2) = 0.0;    b(0) = (n2 - n1) | u;
+    A(1,0) = 0.0;    A(1,1) = e0 | u; A(1,2) = e0 | v; b(1) = (n2 - n1) | v;
+    A(2,0) = e1 | u; A(2,1) = e1 | v; A(2,2) = 0.0;    b(2) = (n0 - n2) | u;
+    A(3,0) = 0.0;    A(3,1) = e1 | u; A(3,2) = e1 | v; b(3) = (n0 - n2) | v;
+    A(4,0) = e2 | u; A(4,1) = e2 | v; A(4,2) = 0.0;    b(4) = (n1 - n0) | u;
+    A(5,0) = 0.0;    A(5,1) = e2 | u; A(5,2) = e2 | v; b(5) = (n1 - n0) | v;
+    Eigen::Vector3d x = A.fullPivLu().solve(b);
+
+    if (!(A*x).isApprox(b)) {
+      // Singular case
+      Eigen::JacobiSVD<Eigen::MatrixXd> svd(A, Eigen::ComputeThinU | Eigen::ComputeThinV);
+      x = svd.solve(b);
+    }
+
+    Eigen::Matrix2d F;          // Fundamental matrix for the face
+    F << x(0), x(1),
+         x(1), x(2);
+
+    auto h = h0;
+    do {
+      auto p = mesh.to_vertex_handle(h);
+
+      // Rotate the (up,vp) local coordinate system to be coplanar with that of the face
+      Vector up, vp;
+      auto np = mesh.normal(p);
+      localSystem(np, up, vp);
+      auto axis = cross(np, n); axis /= axis.norm();
+      double angle = acos(std::min(std::max(n | np, -1.0f), 1.0f));
+      auto rotation = Eigen::AngleAxisd(angle, Eigen::Vector3d(axis[0], axis[1], axis[2]));
+      Eigen::Vector3d up1(up[0], up[1], up[2]), vp1(vp[0], vp[1], vp[2]);
+      up1 = rotation * up1; vp1 = rotation * vp1;
+      up = Vector(up1(0), up1(1), up1(2));
+      vp = Vector(vp1(0), vp1(1), vp1(2));
+
+      // Compute the vertex-local (e,f,g)
+      double e, f, g;
+      Eigen::Vector2d upf, vpf;
+      upf << (up | u), (up | v);
+      vpf << (vp | u), (vp | v);
+      e = upf.transpose() * F * upf;
+      f = upf.transpose() * F * vpf;
+      g = vpf.transpose() * F * vpf;
+
+      // Accumulate the results with Voronoi weights
+      double w = voronoiWeight(h);
+      efgp[p] += Vector(e, f, g) * w;
+      wp[p] += w;
+      
+      // Next halfedge
+      h = mesh.next_halfedge_handle(h);
+    } while (h != h0);
+  }
+
+  // Compute the principal curvatures
+  for(MyMesh::VertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i) {
+    auto &efg = efgp[*i];
+    efg /= wp[*i];
+    Eigen::Matrix2d F;
+    F << efg[0], efg[1],
+         efg[1], efg[2];
+    auto k = F.eigenvalues();   // always real, because F is a symmetric real matrix
+    mesh.data(*i).mean = (k(0).real() + k(1).real()) / 2.0;
+  }
+
+  if(update_min_max)
+    updateMeanMinMax();
+}
+#endif
 
 void MyViewer::meanMapColor(double d, double *color) const
 {
@@ -128,12 +288,49 @@ void MyViewer::fairMesh()
   emit endComputation();
 }
 
+MyViewer::MyMesh::Normal MyViewer::computeNormal(MyViewer::MyMesh::VertexHandle v) const {
+  // Weights according to:
+  //   N. Max, Weights for computing vertex normals from facet normals.
+  //     Journal of Graphics Tools, Vol. 4(2), 1999.
+
+  // Based on calc_vertex_normal{,_correct} in OpenMesh::PolyMeshT
+  MyMesh::Normal n;
+
+  n.vectorize(0.0);
+  MyMesh::ConstVertexIHalfedgeIter cvih_it = mesh.cvih_iter(v);
+  if (!cvih_it.is_valid())
+    return n;
+
+  MyMesh::Normal in_he_vec;
+  mesh.calc_edge_vector(*cvih_it, in_he_vec);
+  for (; cvih_it.is_valid(); ++cvih_it) {
+    if (mesh.is_boundary(*cvih_it))
+      continue;
+    MyMesh::HalfedgeHandle out_heh(mesh.next_halfedge_handle(*cvih_it));
+    MyMesh::Normal out_he_vec;
+    mesh.calc_edge_vector(out_heh, out_he_vec);
+    double w = in_he_vec.sqrnorm() * out_he_vec.sqrnorm();
+    n += cross(in_he_vec, out_he_vec) / (w == 0.0 ? 1.0 : w);
+    in_he_vec = out_he_vec;
+    in_he_vec *= -1;
+  }
+
+  double len = n.length();
+  if (len != 0.0)
+    n *= 1 / len;
+  return n;
+}
+
 bool MyViewer::openMesh(std::string const &filename)
 {
   if(!OpenMesh::IO::read_mesh(mesh, filename) || mesh.n_vertices() == 0)
     return false;
   mesh.request_face_normals(); mesh.request_vertex_normals();
-  mesh.update_face_normals();  mesh.update_vertex_normals();
+  mesh.update_face_normals();  //mesh.update_vertex_normals();
+
+  // update vertex normals by hand
+  for (MyMesh::VertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i)
+    mesh.set_normal(*i, computeNormal(*i));
 
   updateMeanCurvature();
 

@@ -58,6 +58,9 @@ private:
   void drawAxes() const;
   void drawAxesWithNames() const;
   Vec intersectLines(Vec const &ap, Vec const &ad, Vec const &bp, Vec const &bd) const;
+  MyMesh::Normal computeNormal(MyMesh::VertexHandle v) const;
+  void localSystem(Vector const &normal, Vector &u, Vector &v);
+  double voronoiWeight(MyMesh::HalfedgeHandle in_he);
 
   MyMesh mesh;
   double mean_min, mean_max;
