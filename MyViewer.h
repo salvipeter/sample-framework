@@ -13,7 +13,7 @@ class MyViewer : public QGLViewer
   Q_OBJECT
 
 public:
-  MyViewer(QWidget *parent);
+  explicit MyViewer(QWidget *parent);
   virtual ~MyViewer();
 
   inline double getCutoffRatio() const;
@@ -31,13 +31,13 @@ signals:
   void endComputation();
 
 protected:
-  virtual void init();
-  virtual void draw();
-  virtual void drawWithNames();
-  virtual void postSelection(const QPoint &p);
-  virtual void keyPressEvent(QKeyEvent *e);
-  virtual void mouseMoveEvent(QMouseEvent *e);
-  virtual QString helpString() const;
+  virtual void init() override;
+  virtual void draw() override;
+  virtual void drawWithNames() override;
+  virtual void postSelection(const QPoint &p) override;
+  virtual void keyPressEvent(QKeyEvent *e) override;
+  virtual void mouseMoveEvent(QMouseEvent *e) override;
+  virtual QString helpString() const override;
 
 private:
   struct MyTraits : public OpenMesh::DefaultTraits {

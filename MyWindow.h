@@ -13,7 +13,7 @@ class MyWindow : public QMainWindow
   Q_OBJECT
 
 public:
-  MyWindow(QApplication *parent);
+  explicit MyWindow(QApplication *parent);
   ~MyWindow();
 
 private slots:
