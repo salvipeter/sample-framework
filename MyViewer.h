@@ -22,7 +22,8 @@ public:
   inline void setMeanMin(double min);
   inline double getMeanMax() const;
   inline void setMeanMax(double max);
-  bool openMesh(std::string const &filename);
+  bool openMesh(const std::string &filename);
+  bool openBezier(const std::string &filename);
 
 signals:
   void startComputation(QString message);
@@ -49,23 +50,48 @@ private:
   using MyMesh = OpenMesh::TriMesh_ArrayKernelT<MyTraits>;
   using Vector = OpenMesh::VectorT<double,3>;
 
-  void updateMeanMinMax();
-  void updateMeanCurvature(bool update_min_max = true);
-  Vec meanMapColor(double d) const;
-  void fairMesh();
-  void drawAxes() const;
-  void drawAxesWithNames() const;
-  static Vec intersectLines(const Vec &ap, const Vec &ad, const Vec &bp, const Vec &bd);
+  // Mesh
+  void updateMesh(bool update_mean_range = true);
   void updateVertexNormals();
   void localSystem(const Vector &normal, Vector &u, Vector &v);
   double voronoiWeight(MyMesh::HalfedgeHandle in_he);
+  void updateMeanMinMax();
+  void updateMeanCurvature(bool update_min_max = true);
 
+  // Bezier
+  static void bernsteinAll(size_t n, double u, std::vector<double> &coeff);
+  void generateMesh();
+
+  // Visualization
+  void setupCamera();
+  Vec meanMapColor(double d) const;
+  void drawControlNet() const;
+  void drawAxes() const;
+  void drawAxesWithNames() const;
+  static Vec intersectLines(const Vec &ap, const Vec &ad, const Vec &bp, const Vec &bd);
+
+  // Other
+  void fairMesh();
+
+  //////////////////////
+  // Member variables //
+  //////////////////////
+
+  enum class ModelType { NONE, MESH, BEZIER_SURFACE } model_type;
+
+  // Mesh
   MyMesh mesh;
+
+  // Bezier
+  size_t degree[2];
+  std::vector<Vec> control_points;
+
+  // Visualization
   double mean_min, mean_max, cutoff_ratio;
-  bool show_solid, show_wireframe;
+  bool show_control_points, show_solid, show_wireframe;
   enum class Visualization { PLAIN, MEAN, ISOPHOTES } visualization;
   GLuint isophote_texture;
-  MyMesh::VertexHandle selected_vertex;
+  int selected_vertex;
   struct ModificationAxes {
     bool shown;
     float size;

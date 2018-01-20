@@ -56,13 +56,21 @@ MyWindow::~MyWindow()
 
 void MyWindow::open()
 {
-  auto fileName =
+  auto filename =
     QFileDialog::getOpenFileName(this, tr("Open File"), ".",
-                                 tr("Mesh (*.obj *.ply *.stl);;All files (*.*)"));
-  if(!fileName.isEmpty()) 
-    if(!viewer->openMesh(fileName.toUtf8().data()))
-      QMessageBox::warning(this, tr("Cannot open file"),
-                           tr("Could not open file: ") + fileName + ".");
+                          tr("Mesh (*.obj *.ply *.stl);;Bézier surface (*.bzr);;All files (*.*)"));
+  if(filename.isEmpty())
+    return;
+
+  bool ok;
+  if (filename.endsWith(".bzr"))
+    ok = viewer->openBezier(filename.toUtf8().data());
+  else
+    ok = viewer->openMesh(filename.toUtf8().data());
+
+  if (!ok)
+    QMessageBox::warning(this, tr("Cannot open file"),
+                         tr("Could not open file: ") + filename + ".");
 }
 
 void MyWindow::setCutoff()
