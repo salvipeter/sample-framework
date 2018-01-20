@@ -55,8 +55,8 @@ private:
   void fairMesh();
   void drawAxes() const;
   void drawAxesWithNames() const;
-  Vec intersectLines(const Vec &ap, const Vec &ad, const Vec &bp, const Vec &bd) const;
-  Vector computeNormal(MyMesh::VertexHandle v) const;
+  static Vec intersectLines(const Vec &ap, const Vec &ad, const Vec &bp, const Vec &bd);
+  void updateVertexNormals();
   void localSystem(const Vector &normal, Vector &u, Vector &v);
   double voronoiWeight(MyMesh::HalfedgeHandle in_he);
 
