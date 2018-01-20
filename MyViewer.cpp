@@ -55,7 +55,7 @@ void MyViewer::updateMeanMinMax()
 
   std::sort(mean.begin(), mean.end());
   size_t k = (double)n * cutoff_ratio;
-  mean_min = std::min(mean[k-1], 0.0);
+  mean_min = std::min(mean[k ? k-1 : 0], 0.0);
   mean_max = std::max(mean[n-k], 0.0);
 }
 
