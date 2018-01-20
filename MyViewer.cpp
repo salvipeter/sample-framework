@@ -204,12 +204,6 @@ void MyViewer::updateMeanCurvature(bool update_min_max)
     A(5,0) = 0.0;    A(5,1) = e2 | u; A(5,2) = e2 | v; b(5) = (n1 - n0) | v;
     Eigen::Vector3d x = A.fullPivLu().solve(b);
 
-    if (!(A*x).isApprox(b)) {
-      // Singular case
-      Eigen::JacobiSVD<Eigen::MatrixXd> svd(A, Eigen::ComputeThinU | Eigen::ComputeThinV);
-      x = svd.solve(b);
-    }
-
     Eigen::Matrix2d F;          // Fundamental matrix for the face
     F << x(0), x(1),
          x(1), x(2);
