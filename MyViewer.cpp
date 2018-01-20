@@ -78,7 +78,7 @@ void MyViewer::localSystem(const MyViewer::Vector &normal, MyViewer::Vector &u, 
   u[nexti] = -normal[maxi];
   u[maxi] = normal[nexti];
   u /= u.norm();
-  v = cross(normal, u);
+  v = normal % u;
 }
 
 double MyViewer::voronoiWeight(MyViewer::MyMesh::HalfedgeHandle in_he)
@@ -183,12 +183,12 @@ void MyViewer::updateMeanCurvature(bool update_min_max)
          (e2 | u), (e2 | v),    0.0,
             0.0,   (e2 | u), (e2 | v);
     Eigen::VectorXd b(6);
-    b << ((n2 - n1) | u),
-         ((n2 - n1) | v),
-         ((n0 - n2) | u),
-         ((n0 - n2) | v),
-         ((n1 - n0) | u),
-         ((n1 - n0) | v);
+    b << (n2 - n1 | u),
+         (n2 - n1 | v),
+         (n0 - n2 | u),
+         (n0 - n2 | v),
+         (n1 - n0 | u),
+         (n1 - n0 | v);
     Eigen::Vector3d x = A.fullPivLu().solve(b);
 
     Eigen::Matrix2d F;          // Fundamental matrix for the face
@@ -201,7 +201,7 @@ void MyViewer::updateMeanCurvature(bool update_min_max)
       // Rotate the (up,vp) local coordinate system to be coplanar with that of the face
       Vector np = mesh.normal(p), up, vp;
       localSystem(np, up, vp);
-      auto axis = cross(np, n).normalize();
+      auto axis = (np % n).normalize();
       double angle = acos(std::min(std::max(n | np, -1.0), 1.0));
       auto rotation = Eigen::AngleAxisd(angle, Eigen::Vector3d(axis.data()));
       Eigen::Vector3d up1(up.data()), vp1(vp.data());
@@ -275,12 +275,12 @@ void MyViewer::updateVertexNormals() {
   for (auto v : mesh.vertices()) {
     Vector n(0.0, 0.0, 0.0);
     for (auto h : mesh.vih_range(v)) {
-      auto in_vec = mesh.calc_edge_vector(h);
       if (mesh.is_boundary(h))
         continue;
+      auto in_vec  = mesh.calc_edge_vector(h);
       auto out_vec = mesh.calc_edge_vector(mesh.next_halfedge_handle(h));
       double w = in_vec.sqrnorm() * out_vec.sqrnorm();
-      n += cross(in_vec, out_vec) / (w == 0.0 ? 1.0 : w);
+      n += (in_vec % out_vec) / (w == 0.0 ? 1.0 : w);
     }
     double len = n.length();
     if (len != 0.0)
