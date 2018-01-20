@@ -39,6 +39,8 @@ protected:
 
 private:
   struct MyTraits : public OpenMesh::DefaultTraits {
+    using Point  = OpenMesh::Vec3d; // the default would be Vec3f
+    using Normal = OpenMesh::Vec3d;
     VertexTraits {
       double area;              // total area of the surrounding triangles
       double mean;              // approximated mean curvature
@@ -47,10 +49,9 @@ private:
       double area;
     };
   };
-  typedef OpenMesh::TriMesh_ArrayKernelT<MyTraits> MyMesh;
-  typedef MyMesh::Point Vector;
+  using MyMesh = OpenMesh::TriMesh_ArrayKernelT<MyTraits>;
+  using Vector = OpenMesh::VectorT<double,3>;
 
-  inline Vector halfedgeVector(MyMesh::HalfedgeHandle const &h) const;
   void updateMeanMinMax();
   void updateMeanCurvature(bool update_min_max = true);
   void meanMapColor(double d, double *color) const;
@@ -58,7 +59,7 @@ private:
   void drawAxes() const;
   void drawAxesWithNames() const;
   Vec intersectLines(Vec const &ap, Vec const &ad, Vec const &bp, Vec const &bd) const;
-  MyMesh::Normal computeNormal(MyMesh::VertexHandle v) const;
+  Vector computeNormal(MyMesh::VertexHandle v) const;
   void localSystem(Vector const &normal, Vector &u, Vector &v);
   double voronoiWeight(MyMesh::HalfedgeHandle in_he);
 
@@ -73,8 +74,7 @@ private:
     bool shown;
     float size;
     int selected_axis;
-    GLfloat position[3];
-    Vec grabbed_pos, original_pos;
+    Vec position, grabbed_pos, original_pos;
   } axes;
 };
 
