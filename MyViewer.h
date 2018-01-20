@@ -1,3 +1,4 @@
+// -*- mode: c++ -*-
 #pragma once
 
 #include <string>
@@ -42,11 +43,7 @@ private:
     using Point  = OpenMesh::Vec3d; // the default would be Vec3f
     using Normal = OpenMesh::Vec3d;
     VertexTraits {
-      double area;              // total area of the surrounding triangles
       double mean;              // approximated mean curvature
-    };
-    FaceTraits {
-      double area;
     };
   };
   using MyMesh = OpenMesh::TriMesh_ArrayKernelT<MyTraits>;
@@ -54,22 +51,21 @@ private:
 
   void updateMeanMinMax();
   void updateMeanCurvature(bool update_min_max = true);
-  void meanMapColor(double d, double *color) const;
+  Vec meanMapColor(double d) const;
   void fairMesh();
   void drawAxes() const;
   void drawAxesWithNames() const;
-  Vec intersectLines(Vec const &ap, Vec const &ad, Vec const &bp, Vec const &bd) const;
+  Vec intersectLines(const Vec &ap, const Vec &ad, const Vec &bp, const Vec &bd) const;
   Vector computeNormal(MyMesh::VertexHandle v) const;
-  void localSystem(Vector const &normal, Vector &u, Vector &v);
+  void localSystem(const Vector &normal, Vector &u, Vector &v);
   double voronoiWeight(MyMesh::HalfedgeHandle in_he);
 
   MyMesh mesh;
-  double mean_min, mean_max;
-  double cutoff_ratio;
+  double mean_min, mean_max, cutoff_ratio;
   bool show_solid, show_wireframe;
-  enum { COLOR_PLAIN, COLOR_MEAN, COLOR_ISOPHOTES } coloring;
+  enum class Visualization { PLAIN, MEAN, ISOPHOTES } visualization;
   GLuint isophote_texture;
-  MyMesh::ConstVertexIter selected;
+  MyMesh::VertexHandle selected_vertex;
   struct ModificationAxes {
     bool shown;
     float size;

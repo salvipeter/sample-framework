@@ -29,7 +29,7 @@
 MyViewer::MyViewer(QWidget *parent) :
   QGLViewer(parent),
   mean_min(0.0), mean_max(0.0), cutoff_ratio(0.05),
-  show_solid(true), show_wireframe(false), coloring(COLOR_PLAIN)
+  show_solid(true), show_wireframe(false), visualization(Visualization::PLAIN)
 {
   setSelectRegionWidth(5);
   setSelectRegionHeight(5);
@@ -105,20 +105,23 @@ double MyViewer::voronoiWeight(MyViewer::MyMesh::HalfedgeHandle in_he) {
 #ifndef BETTER_MEAN_CURVATURE
 void MyViewer::updateMeanCurvature(bool update_min_max)
 {
+  std::map<MyMesh::FaceHandle, double> face_area;
+  std::map<MyMesh::VertexHandle, double> vertex_area;
+
   for(MyMesh::ConstFaceIter i = mesh.faces_begin(), ie = mesh.faces_end(); i != ie; ++i) {
     MyMesh::HalfedgeHandle h1 = mesh.halfedge_handle(*i);
     MyMesh::HalfedgeHandle h2 = mesh.next_halfedge_handle(h1);
-    mesh.data(*i).area = (mesh.calc_edge_vector(h1) % mesh.calc_edge_vector(h2)).norm() / 2.0;
+    face_area[*i] = (mesh.calc_edge_vector(h1) % mesh.calc_edge_vector(h2)).norm() / 2.0;
   }
 
   // Compute triangle strip areas
   for(MyMesh::VertexIter i = mesh.vertices_begin(), ie = mesh.vertices_end(); i != ie; ++i) {
-    mesh.data(*i).area = 0;
+    vertex_area[*i] = 0;
     mesh.data(*i).mean = 0;
 #ifndef BETTER_MEAN_WEIGHT
     for(MyMesh::ConstVertexFaceIter j(mesh, *i); j.is_valid(); ++j)
-      mesh.data(*i).area += mesh.data(*j).area;
-    mesh.data(*i).area /= 3.0;
+      vertex_area[*i] += face_area[*j];
+    vertex_area[*i] /= 3.0;
 #endif
   }
 
@@ -127,7 +130,7 @@ void MyViewer::updateMeanCurvature(bool update_min_max)
     auto h0 = mesh.halfedge_handle(*i), h = h0;
     do {
       auto p = mesh.to_vertex_handle(h);
-      mesh.data(p).area += voronoiWeight(h);
+      vertex_area[p] += voronoiWeight(h);
       h = mesh.next_halfedge_handle(h);
     } while (h != h0);
   }
@@ -150,7 +153,7 @@ void MyViewer::updateMeanCurvature(bool update_min_max)
       }
       mesh.data(*i).mean += angle * v.norm();
     }
-    mesh.data(*i).mean *= 0.25 / mesh.data(*i).area;
+    mesh.data(*i).mean *= 0.25 / vertex_area[*i];
   }
 
   if(update_min_max)
@@ -257,27 +260,15 @@ void MyViewer::updateMeanCurvature(bool update_min_max)
 }
 #endif
 
-void MyViewer::meanMapColor(double d, double *color) const
+Vec MyViewer::meanMapColor(double d) const
 {
-  if(d <= mean_min) {
-    color[0] = 0.0;
-    color[1] = 0.0;
-    color[2] = 1.0;
-  } else if(d >= mean_max) {
-    color[0] = 1.0;
-    color[1] = 0.0;
-    color[2] = 0.0;
-  } else if(d < 0) {
-    double alpha = d / mean_min;
-    color[0] = 0.0;
-    color[1] = 1.0 - alpha;
-    color[2] = alpha;
-  } else {
-    double alpha = d / mean_max;
-    color[0] = alpha;
-    color[1] = 1.0 - alpha;
-    color[2] = 0;
+  static const Vec red(1,0,0), green(0,1,0), blue(0,0,1);
+  if (d < 0) {
+    double alpha = std::min(d / mean_min, 1.0);
+    return green * (1 - alpha) + blue * alpha;
   }
+  double alpha = std::min(d / mean_max, 1.0);
+  return green * (1 - alpha) + red * alpha;
 }
 
 void MyViewer::fairMesh()
@@ -383,11 +374,10 @@ void MyViewer::draw()
   glEnable(GL_POLYGON_OFFSET_FILL);
   glPolygonOffset(1, 1);
 
-  std::vector<double> color(3, 1.0);
   if(show_solid || show_wireframe) {
-    if(coloring == COLOR_PLAIN)
-      glColor3dv(&color[0]);
-    else if(coloring == COLOR_ISOPHOTES) {
+    if(visualization == Visualization::PLAIN)
+      glColor3d(1.0, 1.0, 1.0);
+    else if(visualization == Visualization::ISOPHOTES) {
       glBindTexture(GL_TEXTURE_2D, isophote_texture);
       glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
       glEnable(GL_TEXTURE_2D);
@@ -399,16 +389,14 @@ void MyViewer::draw()
     for(MyMesh::ConstFaceIter i = mesh.faces_begin(), ie = mesh.faces_end(); i != ie; ++i) {
       glBegin(GL_POLYGON);
       for(MyMesh::ConstFaceVertexIter j(mesh, *i); j.is_valid(); ++j) {
-        if(coloring == COLOR_MEAN) {
-          meanMapColor(mesh.data(*j).mean, &color[0]);
-          glColor3dv(&color[0]);
-        }
+        if(visualization == Visualization::MEAN)
+          glColor3dv(meanMapColor(mesh.data(*j).mean));
         glNormal3dv(mesh.normal(*j).data());
         glVertex3dv(mesh.point(*j).data());
       }
       glEnd();
     }
-    if(coloring == COLOR_ISOPHOTES) {
+    if(visualization == Visualization::ISOPHOTES) {
       glDisable(GL_TEXTURE_GEN_S);
       glDisable(GL_TEXTURE_GEN_T);
       glDisable(GL_TEXTURE_2D);
@@ -436,11 +424,11 @@ void MyViewer::draw()
 void MyViewer::drawAxes() const
 {
   Vec const &p = axes.position;
-  glColor3f(1.0, 0.0, 0.0);
+  glColor3d(1.0, 0.0, 0.0);
   drawArrow(p, p + Vec(axes.size, 0.0, 0.0), axes.size / 50.0);
-  glColor3f(0.0, 1.0, 0.0);
+  glColor3d(0.0, 1.0, 0.0);
   drawArrow(p, p + Vec(0.0, axes.size, 0.0), axes.size / 50.0);
-  glColor3f(0.0, 0.0, 1.0);
+  glColor3d(0.0, 0.0, 1.0);
   drawArrow(p, p + Vec(0.0, 0.0, axes.size), axes.size / 50.0);
   glEnd();
 }
@@ -494,7 +482,7 @@ void MyViewer::postSelection(const QPoint &p)
   } else {
     MyMesh::ConstVertexIter i = mesh.vertices_begin();
     for(int j = 0; j != sel; ++i, ++j);
-    selected = i;
+    selected_vertex = *i;
     axes.position = Vec(mesh.point(*i).data());
     double const depth = camera()->projectedCoordinatesOf(axes.position)[2];
     Vec const q1 = camera()->unprojectedCoordinatesOf(Vec(0.0, 0.0, depth));
@@ -510,15 +498,15 @@ void MyViewer::keyPressEvent(QKeyEvent *e)
   if(e->modifiers() == Qt::NoModifier)
     switch(e->key()) {
     case Qt::Key_P:
-      coloring = COLOR_PLAIN;
+      visualization = Visualization::PLAIN;
       updateGL();
       break;
     case Qt::Key_M:
-      coloring = COLOR_MEAN;
+      visualization = Visualization::MEAN;
       updateGL();
       break;
     case Qt::Key_I:
-      coloring = COLOR_ISOPHOTES;
+      visualization = Visualization::ISOPHOTES;
       updateGL();
       break;
     case Qt::Key_S:
@@ -561,7 +549,7 @@ void MyViewer::mouseMoveEvent(QMouseEvent *e)
     Vec p = intersectLines(axes.grabbed_pos, axis, from, dir);
     float d = (p - axes.grabbed_pos) * axis;
     axes.position[axes.selected_axis] = axes.original_pos[axes.selected_axis] + d;
-    mesh.set_point(*selected, MyMesh::Point(axes.position));
+    mesh.set_point(selected_vertex, MyMesh::Point(axes.position));
     updateGL();
   } else
     QGLViewer::mouseMoveEvent(e);

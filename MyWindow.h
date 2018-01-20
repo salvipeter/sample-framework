@@ -1,3 +1,4 @@
+// -*- mode: c++ -*-
 #pragma once
 
 #include <QtWidgets/QMainWindow>
