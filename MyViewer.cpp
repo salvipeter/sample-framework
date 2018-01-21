@@ -302,7 +302,7 @@ void MyViewer::updateMesh(bool update_mean_range)
 void MyViewer::setupCamera()
 {
   // Set camera on the model
-  MyMesh::Point box_min, box_max;
+  Vector box_min, box_max;
   box_min = box_max = mesh.point(*mesh.vertices_begin());
   for (auto v : mesh.vertices()) {
     box_min.minimize(mesh.point(v));
@@ -615,7 +615,7 @@ void MyViewer::generateMesh()
       for (size_t k = 0, index = 0; k <= n; ++k)
         for (size_t l = 0; l <= m; ++l, ++index)
           p += control_points[index] * coeff_u[k] * coeff_v[l];
-      handles.push_back(mesh.add_vertex(Vector(p)));
+      handles.push_back(mesh.add_vertex(Vector(static_cast<double *>(p))));
     }
   }
   for (size_t i = 0; i < resolution - 1; ++i)
@@ -646,7 +646,8 @@ void MyViewer::mouseMoveEvent(QMouseEvent *e)
   float d = (p - axes.grabbed_pos) * axis;
   axes.position[axes.selected_axis] = axes.original_pos[axes.selected_axis] + d;
   if (model_type == ModelType::MESH)
-    mesh.set_point(MyMesh::VertexHandle(selected_vertex), MyMesh::Point(axes.position));
+    mesh.set_point(MyMesh::VertexHandle(selected_vertex),
+                   Vector(static_cast<double *>(axes.position)));
   if (model_type == ModelType::BEZIER_SURFACE)
     control_points[selected_vertex] = axes.position;
   updateMesh();
