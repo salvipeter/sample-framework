@@ -183,12 +183,12 @@ void MyViewer::updateMeanCurvature(bool update_min_max)
          (e2 | u), (e2 | v),    0.0,
             0.0,   (e2 | u), (e2 | v);
     Eigen::VectorXd b(6);
-    b << (n2 - n1 | u),
-         (n2 - n1 | v),
-         (n0 - n2 | u),
-         (n0 - n2 | v),
-         (n1 - n0 | u),
-         (n1 - n0 | v);
+    b << ((n2 - n1) | u),
+         ((n2 - n1) | v),
+         ((n0 - n2) | u),
+         ((n0 - n2) | v),
+         ((n1 - n0) | u),
+         ((n1 - n0) | v);
     Eigen::Vector3d x = A.fullPivLu().solve(b);
 
     Eigen::Matrix2d F;          // Fundamental matrix for the face
