@@ -4,7 +4,9 @@
 
 #include "MyWindow.h"
 
-MyWindow::MyWindow(QApplication *parent) : QMainWindow(), parent(parent) {
+MyWindow::MyWindow(QApplication *parent) :
+  QMainWindow(), parent(parent), last_directory(".")
+{
   setWindowTitle(tr("Sample 3D Framework"));
   setStatusBar(new QStatusBar);
   progress = new QProgressBar;
@@ -54,10 +56,13 @@ MyWindow::~MyWindow() {
 
 void MyWindow::open() {
   auto filename =
-    QFileDialog::getOpenFileName(this, tr("Open File"), ".",
-                          tr("Mesh (*.obj *.ply *.stl);;Bézier surface (*.bzr);;All files (*.*)"));
+    QFileDialog::getOpenFileName(this, tr("Open File"), last_directory,
+                                 tr("Mesh (*.obj *.ply *.stl);;"
+                                    "Bézier surface (*.bzr);;"
+                                    "All files (*.*)"));
   if(filename.isEmpty())
     return;
+  last_directory = QFileInfo(filename).absolutePath();
 
   bool ok;
   if (filename.endsWith(".bzr"))

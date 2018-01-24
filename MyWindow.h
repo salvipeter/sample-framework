@@ -27,4 +27,5 @@ private:
   QApplication *parent;
   MyViewer *viewer;
   QProgressBar *progress;
+  QString last_directory;
 };

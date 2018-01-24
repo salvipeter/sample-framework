@@ -514,7 +514,7 @@ void MyViewer::postSelection(const QPoint &p) {
 
 void MyViewer::keyPressEvent(QKeyEvent *e) {
   if (e->modifiers() == Qt::NoModifier)
-    switch(e->key()) {
+    switch (e->key()) {
     case Qt::Key_P:
       visualization = Visualization::PLAIN;
       updateGL();
