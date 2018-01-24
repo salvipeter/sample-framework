@@ -4,8 +4,7 @@
 
 #include "MyWindow.h"
 
-MyWindow::MyWindow(QApplication *parent) : QMainWindow(), parent(parent)
-{
+MyWindow::MyWindow(QApplication *parent) : QMainWindow(), parent(parent) {
   setWindowTitle(tr("Sample 3D Framework"));
   setStatusBar(new QStatusBar);
   progress = new QProgressBar;
@@ -50,12 +49,10 @@ MyWindow::MyWindow(QApplication *parent) : QMainWindow(), parent(parent)
   visMenu->addAction(rangeAction);
 }
 
-MyWindow::~MyWindow()
-{
+MyWindow::~MyWindow() {
 }
 
-void MyWindow::open()
-{
+void MyWindow::open() {
   auto filename =
     QFileDialog::getOpenFileName(this, tr("Open File"), ".",
                           tr("Mesh (*.obj *.ply *.stl);;Bézier surface (*.bzr);;All files (*.*)"));
@@ -73,8 +70,7 @@ void MyWindow::open()
                          tr("Could not open file: ") + filename + ".");
 }
 
-void MyWindow::setCutoff()
-{
+void MyWindow::setCutoff() {
   // Memory management options for the dialog:
   // - on the stack (deleted at the end of the function)
   // - on the heap with manual delete or std::unique_ptr 
@@ -115,8 +111,7 @@ void MyWindow::setCutoff()
   }
 }
 
-void MyWindow::setRange()
-{
+void MyWindow::setRange() {
   QDialog dlg(this);
   auto *grid   = new QGridLayout;
   auto *text1  = new QLabel(tr("Min:")),
@@ -154,22 +149,19 @@ void MyWindow::setRange()
   }
 }
 
-void MyWindow::startComputation(QString message)
-{
+void MyWindow::startComputation(QString message) {
   statusBar()->showMessage(message);
   progress->setValue(0);
   progress->show();
   parent->processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
-void MyWindow::midComputation(int percent)
-{
+void MyWindow::midComputation(int percent) {
   progress->setValue(percent);
   parent->processEvents(QEventLoop::ExcludeUserInputEvents);
 }
 
-void MyWindow::endComputation()
-{
+void MyWindow::endComputation() {
   progress->hide();
   statusBar()->clearMessage();
 }

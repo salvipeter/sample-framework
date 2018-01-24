@@ -37,13 +37,11 @@ MyViewer::MyViewer(QWidget *parent) :
   axes.shown = false;
 }
 
-MyViewer::~MyViewer()
-{
+MyViewer::~MyViewer() {
   glDeleteTextures(1, &isophote_texture);
 }
 
-void MyViewer::updateMeanMinMax()
-{
+void MyViewer::updateMeanMinMax() {
   size_t n = mesh.n_vertices();
   if (n == 0)
     return;
@@ -59,8 +57,8 @@ void MyViewer::updateMeanMinMax()
   mean_max = std::max(mean[n-k], 0.0);
 }
 
-void MyViewer::localSystem(const MyViewer::Vector &normal, MyViewer::Vector &u, MyViewer::Vector &v)
-{
+void MyViewer::localSystem(const MyViewer::Vector &normal,
+                           MyViewer::Vector &u, MyViewer::Vector &v) {
   // Generates an orthogonal (u,v) coordinate system in the plane defined by `normal`.
   int maxi = 0, nexti = 1;
   double max = fabs(normal[0]), next = fabs(normal[1]);
@@ -81,8 +79,7 @@ void MyViewer::localSystem(const MyViewer::Vector &normal, MyViewer::Vector &u, 
   v = normal % u;
 }
 
-double MyViewer::voronoiWeight(MyViewer::MyMesh::HalfedgeHandle in_he)
-{
+double MyViewer::voronoiWeight(MyViewer::MyMesh::HalfedgeHandle in_he) {
   // Returns the area of the triangle bounded by in_he that is closest
   // to the vertex pointed to by in_he.
 
@@ -105,8 +102,7 @@ double MyViewer::voronoiWeight(MyViewer::MyMesh::HalfedgeHandle in_he)
 }
 
 #ifndef BETTER_MEAN_CURVATURE
-void MyViewer::updateMeanCurvature(bool update_min_max)
-{
+void MyViewer::updateMeanCurvature(bool update_min_max) {
   std::map<MyMesh::FaceHandle, double> face_area;
   std::map<MyMesh::VertexHandle, double> vertex_area;
 
@@ -144,8 +140,7 @@ void MyViewer::updateMeanCurvature(bool update_min_max)
     updateMeanMinMax();
 }
 #else // BETTER_MEAN_CURVATURE
-void MyViewer::updateMeanCurvature(bool update_min_max)
-{
+void MyViewer::updateMeanCurvature(bool update_min_max) {
   // As in the paper:
   //   S. Rusinkiewicz, Estimating curvatures and their derivatives on triangle meshes.
   //     3D Data Processing, Visualization and Transmission, IEEE, 2004.
@@ -240,8 +235,7 @@ void MyViewer::updateMeanCurvature(bool update_min_max)
 }
 #endif
 
-Vec MyViewer::meanMapColor(double d) const
-{
+Vec MyViewer::meanMapColor(double d) const {
   static const Vec red(1,0,0), green(0,1,0), blue(0,0,1);
   if (d < 0) {
     double alpha = mean_min ? std::min(d / mean_min, 1.0) : 1.0;
@@ -251,8 +245,7 @@ Vec MyViewer::meanMapColor(double d) const
   return green * (1 - alpha) + red * alpha;
 }
 
-void MyViewer::fairMesh()
-{
+void MyViewer::fairMesh() {
   if (model_type != ModelType::MESH)
     return;
 
@@ -289,8 +282,7 @@ void MyViewer::updateVertexNormals() {
   }
 }
 
-void MyViewer::updateMesh(bool update_mean_range)
-{
+void MyViewer::updateMesh(bool update_mean_range) {
   if (model_type == ModelType::BEZIER_SURFACE)
     generateMesh();
   mesh.request_face_normals(); mesh.request_vertex_normals();
@@ -299,8 +291,7 @@ void MyViewer::updateMesh(bool update_mean_range)
   updateMeanCurvature(update_mean_range);
 }
 
-void MyViewer::setupCamera()
-{
+void MyViewer::setupCamera() {
   // Set camera on the model
   Vector box_min, box_max;
   box_min = box_max = mesh.point(*mesh.vertices_begin());
@@ -317,8 +308,7 @@ void MyViewer::setupCamera()
   updateGL();
 }
 
-bool MyViewer::openMesh(const std::string &filename)
-{
+bool MyViewer::openMesh(const std::string &filename) {
   if (!OpenMesh::IO::read_mesh(mesh, filename) || mesh.n_vertices() == 0)
     return false;
   model_type = ModelType::MESH;
@@ -327,8 +317,7 @@ bool MyViewer::openMesh(const std::string &filename)
   return true;
 }
 
-bool MyViewer::openBezier(const std::string &filename)
-{
+bool MyViewer::openBezier(const std::string &filename) {
   size_t n, m;
   try {
     std::ifstream f(filename.c_str());
@@ -347,8 +336,7 @@ bool MyViewer::openBezier(const std::string &filename)
   return true;
 }
 
-void MyViewer::init()
-{
+void MyViewer::init() {
   glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 1);
   QImage img(":/isophotes.png");
   glGenTextures(1, &isophote_texture);
@@ -361,8 +349,7 @@ void MyViewer::init()
                GL_UNSIGNED_BYTE, img.convertToFormat(QImage::Format_ARGB32).bits());
 }
 
-void MyViewer::draw()
-{
+void MyViewer::draw() {
   if (model_type == ModelType::BEZIER_SURFACE && show_control_points)
     drawControlNet();
 
@@ -417,8 +404,7 @@ void MyViewer::draw()
     drawAxes();
 }
 
-void MyViewer::drawControlNet() const
-{
+void MyViewer::drawControlNet() const {
   glDisable(GL_LIGHTING);
   glLineWidth(3.0);
   glColor3d(0.3, 0.3, 1.0);
@@ -444,8 +430,7 @@ void MyViewer::drawControlNet() const
   glEnable(GL_LIGHTING);
 }
 
-void MyViewer::drawAxes() const
-{
+void MyViewer::drawAxes() const {
   const Vec &p = axes.position;
   glColor3d(1.0, 0.0, 0.0);
   drawArrow(p, p + Vec(axes.size, 0.0, 0.0), axes.size / 50.0);
@@ -456,8 +441,7 @@ void MyViewer::drawAxes() const
   glEnd();
 }
 
-void MyViewer::drawWithNames()
-{
+void MyViewer::drawWithNames() {
   if (axes.shown)
     return drawAxesWithNames();
 
@@ -485,8 +469,7 @@ void MyViewer::drawWithNames()
   }
 }
 
-void MyViewer::drawAxesWithNames() const
-{
+void MyViewer::drawAxesWithNames() const {
   const Vec &p = axes.position;
   glPushName(0);
   drawArrow(p, p + Vec(axes.size, 0.0, 0.0), axes.size / 50.0);
@@ -499,8 +482,7 @@ void MyViewer::drawAxesWithNames() const
   glPopName();
 }
 
-void MyViewer::postSelection(const QPoint &p)
-{
+void MyViewer::postSelection(const QPoint &p) {
   int sel = selectedName();
   if (sel == -1) {
     axes.shown = false;
@@ -530,8 +512,7 @@ void MyViewer::postSelection(const QPoint &p)
   axes.selected_axis = -1;
 }
 
-void MyViewer::keyPressEvent(QKeyEvent *e)
-{
+void MyViewer::keyPressEvent(QKeyEvent *e) {
   if (e->modifiers() == Qt::NoModifier)
     switch(e->key()) {
     case Qt::Key_P:
@@ -569,8 +550,7 @@ void MyViewer::keyPressEvent(QKeyEvent *e)
     QGLViewer::keyPressEvent(e);
 }
 
-Vec MyViewer::intersectLines(const Vec &ap, const Vec &ad, const Vec &bp, const Vec &bd)
-{
+Vec MyViewer::intersectLines(const Vec &ap, const Vec &ad, const Vec &bp, const Vec &bd) {
   // always returns a point on the (ap, ad) line
   double a = ad * ad, b = ad * bd, c = bd * bd;
   double d = ad * (ap - bp), e = bd * (ap - bp);
@@ -580,8 +560,7 @@ Vec MyViewer::intersectLines(const Vec &ap, const Vec &ad, const Vec &bp, const 
   return ap + s * ad;
 }
 
-void MyViewer::bernsteinAll(size_t n, double u, std::vector<double> &coeff)
-{
+void MyViewer::bernsteinAll(size_t n, double u, std::vector<double> &coeff) {
   coeff.clear(); coeff.reserve(n + 1);
   coeff.push_back(1.0);
   double u1 = 1.0 - u;
@@ -596,8 +575,7 @@ void MyViewer::bernsteinAll(size_t n, double u, std::vector<double> &coeff)
   }
 }
 
-void MyViewer::generateMesh()
-{
+void MyViewer::generateMesh() {
   size_t resolution = 30;
 
   mesh.clear();
@@ -633,8 +611,7 @@ void MyViewer::generateMesh()
     }
 }
 
-void MyViewer::mouseMoveEvent(QMouseEvent *e)
-{
+void MyViewer::mouseMoveEvent(QMouseEvent *e) {
   if (!axes.shown || axes.selected_axis < 0 ||
       !(e->modifiers() & Qt::ShiftModifier) ||
       !(e->buttons() & Qt::LeftButton))
@@ -654,8 +631,7 @@ void MyViewer::mouseMoveEvent(QMouseEvent *e)
   updateGL();
 }
 
-QString MyViewer::helpString() const
-{
+QString MyViewer::helpString() const {
   QString text("<h2>Sample Framework</h2>"
                "<p>This is a minimal framework for 3D mesh manipulation, which can be "
                "extended and used as a base for various projects, for example "

@@ -8,8 +8,7 @@
 
 using qglviewer::Vec;
 
-class MyViewer : public QGLViewer
-{
+class MyViewer : public QGLViewer {
   Q_OBJECT
 
 public:

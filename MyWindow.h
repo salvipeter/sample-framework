@@ -8,8 +8,7 @@
 class QApplication;
 class QProgressBar;
 
-class MyWindow : public QMainWindow
-{
+class MyWindow : public QMainWindow {
   Q_OBJECT
 
 public:
