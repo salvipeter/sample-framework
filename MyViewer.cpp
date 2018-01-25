@@ -87,14 +87,6 @@ void MyViewer::localSystem(const MyViewer::Vector &normal,
 double MyViewer::voronoiWeight(MyViewer::MyMesh::HalfedgeHandle in_he) {
   // Returns the area of the triangle bounded by in_he that is closest
   // to the vertex pointed to by in_he.
-
-  // If we are at point `A` with angle `alpha` and opposite edge length `a`,
-  // the circumradius `r` is
-  //   r = a / (2 * sin(alpha)),
-  // and the requested area is
-  //   area(b) + area(c),
-  // where area(x) is the area of a right triangle with hypotenuse r and one cathetus x
-
   auto next = mesh.next_halfedge_handle(in_he);
   auto prev = mesh.prev_halfedge_handle(in_he);
   double c = mesh.calc_edge_vector(in_he).norm();
