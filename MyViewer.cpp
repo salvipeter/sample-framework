@@ -17,6 +17,11 @@
 #include "Eigen/Geometry"
 #include "Eigen/LU"
 #include "Eigen/SVD"
+# ifndef M_PI_2
+namespace {
+  const double M_PI_2 = 2 * std::atan(1);
+}
+# endif
 #endif
 
 #include "MyViewer.h"
@@ -85,20 +90,33 @@ double MyViewer::voronoiWeight(MyViewer::MyMesh::HalfedgeHandle in_he) {
 
   // If we are at point `A` with angle `alpha` and opposite edge length `a`,
   // the circumradius `r` is
-  //   a / (2 * sin(alpha)),
+  //   r = a / (2 * sin(alpha)),
   // and the requested area is
-  //   0.5 * (area(b, r, r) + area(c, r, r)),
-  // where area(a, b, c) is the area of a triangle with edge length a, b, c.
+  //   area(b) + area(c),
+  // where area(x) is the area of a right triangle with hypotenuse r and one cathetus x
 
+  auto next = mesh.next_halfedge_handle(in_he);
+  auto prev = mesh.prev_halfedge_handle(in_he);
+  double c = mesh.calc_edge_vector(in_he).norm();
+  double b = mesh.calc_edge_vector(next).norm();
+  double a = mesh.calc_edge_vector(prev).norm();
   double alpha = mesh.calc_sector_angle(in_he);
-  double a = mesh.calc_edge_vector(mesh.prev_halfedge_handle(in_he)).norm();
-  double b = mesh.calc_edge_vector(in_he).norm();
-  double c = mesh.calc_edge_vector(mesh.next_halfedge_handle(in_he)).norm();
-  double r = a / (2 * sin(alpha));
-  auto area = [](double a, double b) { // Isosceles triangle
-    return 0.5 * std::pow(a, 2) * sqrt(std::max(std::pow(b / a, 2) - 0.25, 0.0));
+  double beta  = mesh.calc_sector_angle(prev);
+  double gamma = mesh.calc_sector_angle(next);
+  double r = a / (2 * sin(alpha)); // circumradius
+  if (std::max({alpha, beta, gamma}) > M_PI_2) {
+    // Obtuse triangle
+    if (gamma > M_PI_2)
+      return 0.125 * b * b * tan(alpha);
+    if (beta > M_PI_2)
+      return 0.125 * c * c * tan(alpha);
+    double total_area = 0.25 * a * b * c / r;
+    return total_area - 0.125 * (b * b * tan(gamma) + c * c * tan(beta));
+  }
+  auto area = [r](double a) {
+    return 0.125 * a * a * sqrt(std::max(4.0 * r * r - a * a, 0.0));
   };
-  return 0.5 * (area(b, r) + area(c, r));
+  return area(b) + area(c);
 }
 
 #ifndef BETTER_MEAN_CURVATURE
@@ -118,19 +136,11 @@ void MyViewer::updateMeanCurvature(bool update_min_max) {
     vertex_area[v] /= 3.0;
   }
 
-  // Compute mean values using normal difference angles
+  // Compute mean values using dihedral angles
   for (auto v : mesh.vertices()) {
     for (auto e : mesh.ve_range(v)) {
       auto vec = mesh.calc_edge_vector(e);
-      auto h1 = mesh.halfedge_handle(e, 0);
-      auto h2 = mesh.halfedge_handle(e, 1);
-      double angle = 0.0;
-      if (!mesh.is_boundary(h1) && !mesh.is_boundary(h2)) {
-        auto n1 = mesh.normal(mesh.face_handle(h1));
-        auto n2 = mesh.normal(mesh.face_handle(h2));
-        angle = acos(std::min(std::max(n1 | n2, -1.0), 1.0));
-        angle *= ((n1 % n2) | vec) >= 0.0 ? 1.0 : -1.0;
-      }
+      double angle = mesh.calc_dihedral_angle(e); // signed; returns 0 at the boundary
       mesh.data(v).mean += angle * vec.norm();
     }
     mesh.data(v).mean *= 0.25 / vertex_area[v];
