@@ -17,11 +17,6 @@
 #include "Eigen/Geometry"
 #include "Eigen/LU"
 #include "Eigen/SVD"
-# ifndef M_PI_2
-namespace {
-  const double M_PI_2 = 2 * std::atan(1);
-}
-# endif
 #endif
 
 #include "MyViewer.h"
@@ -89,26 +84,28 @@ double MyViewer::voronoiWeight(MyViewer::MyMesh::HalfedgeHandle in_he) {
   // to the vertex pointed to by in_he.
   auto next = mesh.next_halfedge_handle(in_he);
   auto prev = mesh.prev_halfedge_handle(in_he);
-  double c = mesh.calc_edge_vector(in_he).norm();
-  double b = mesh.calc_edge_vector(next).norm();
-  double a = mesh.calc_edge_vector(prev).norm();
+  double c2 = mesh.calc_edge_vector(in_he).sqrnorm();
+  double b2 = mesh.calc_edge_vector(next).sqrnorm();
+  double a2 = mesh.calc_edge_vector(prev).sqrnorm();
   double alpha = mesh.calc_sector_angle(in_he);
-  double beta  = mesh.calc_sector_angle(prev);
-  double gamma = mesh.calc_sector_angle(next);
-  double r = a / (2 * sin(alpha)); // circumradius
-  if (std::max({alpha, beta, gamma}) > M_PI_2) {
-    // Obtuse triangle
-    if (gamma > M_PI_2)
-      return 0.125 * b * b * tan(alpha);
-    if (beta > M_PI_2)
-      return 0.125 * c * c * tan(alpha);
-    double total_area = 0.25 * a * b * c / r;
-    return total_area - 0.125 * (b * b * tan(gamma) + c * c * tan(beta));
+
+  if (a2 + b2 < c2)                // obtuse gamma
+    return 0.125 * b2 * std::tan(alpha);
+  if (a2 + c2 < b2)                // obtuse beta
+    return 0.125 * c2 * std::tan(alpha);
+  if (b2 + c2 < a2) {              // obtuse alpha
+    double b = sqrt(b2), c = sqrt(c2);
+    double total_area = 0.5 * b * c * std::sin(alpha);
+    double beta  = mesh.calc_sector_angle(prev);
+    double gamma = mesh.calc_sector_angle(next);
+    return total_area - 0.125 * (b2 * std::tan(gamma) + c2 * std::tan(beta));
   }
-  auto area = [r](double a) {
-    return 0.125 * a * a * sqrt(std::max(4.0 * r * r - a * a, 0.0));
+
+  double r2 = 0.25 * a2 / std::pow(std::sin(alpha), 2); // squared circumradius
+  auto area = [r2](double x2) {
+    return 0.125 * x2 * sqrt(std::max(4.0 * r2 - x2, 0.0));
   };
-  return area(b) + area(c);
+  return area(b2) + area(c2);
 }
 
 #ifndef BETTER_MEAN_CURVATURE
@@ -199,7 +196,7 @@ void MyViewer::updateMeanCurvature(bool update_min_max) {
       Vector np = mesh.normal(p), up, vp;
       localSystem(np, up, vp);
       auto axis = (np % n).normalize();
-      double angle = acos(std::min(std::max(n | np, -1.0), 1.0));
+      double angle = std::acos(std::min(std::max(n | np, -1.0), 1.0));
       auto rotation = Eigen::AngleAxisd(angle, Eigen::Vector3d(axis.data()));
       Eigen::Vector3d up1(up.data()), vp1(vp.data());
       up1 = rotation * up1;    vp1 = rotation * vp1;
