@@ -61,15 +61,15 @@ void MyViewer::localSystem(const MyViewer::Vector &normal,
                            MyViewer::Vector &u, MyViewer::Vector &v) {
   // Generates an orthogonal (u,v) coordinate system in the plane defined by `normal`.
   int maxi = 0, nexti = 1;
-  double max = fabs(normal[0]), next = fabs(normal[1]);
+  double max = std::abs(normal[0]), next = std::abs(normal[1]);
   if (max < next) {
     std::swap(max, next);
     std::swap(maxi, nexti);
   }
-  if (fabs(normal[2]) > max) {
+  if (std::abs(normal[2]) > max) {
     nexti = maxi;
     maxi = 2;
-  } else if (fabs(normal[2]) > next)
+  } else if (std::abs(normal[2]) > next)
     nexti = 2;
 
   u.vectorize(0.0);
@@ -94,7 +94,7 @@ double MyViewer::voronoiWeight(MyViewer::MyMesh::HalfedgeHandle in_he) {
   if (a2 + c2 < b2)                // obtuse beta
     return 0.125 * c2 * std::tan(alpha);
   if (b2 + c2 < a2) {              // obtuse alpha
-    double b = sqrt(b2), c = sqrt(c2);
+    double b = std::sqrt(b2), c = std::sqrt(c2);
     double total_area = 0.5 * b * c * std::sin(alpha);
     double beta  = mesh.calc_sector_angle(prev);
     double gamma = mesh.calc_sector_angle(next);
@@ -103,7 +103,7 @@ double MyViewer::voronoiWeight(MyViewer::MyMesh::HalfedgeHandle in_he) {
 
   double r2 = 0.25 * a2 / std::pow(std::sin(alpha), 2); // squared circumradius
   auto area = [r2](double x2) {
-    return 0.125 * x2 * sqrt(std::max(4.0 * r2 - x2, 0.0));
+    return 0.125 * std::sqrt(x2) * std::sqrt(std::max(4.0 * r2 - x2, 0.0));
   };
   return area(b2) + area(c2);
 }
