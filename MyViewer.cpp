@@ -127,9 +127,9 @@ void MyViewer::updateMeanCurvature(bool update_min_max) {
 
   // Compute mean values using dihedral angles
   for (auto v : mesh.vertices()) {
-    for (auto e : mesh.ve_range(v)) {
-      auto vec = mesh.calc_edge_vector(e);
-      double angle = mesh.calc_dihedral_angle(e); // signed; returns 0 at the boundary
+    for (auto h : mesh.vih_range(v)) {
+      auto vec = mesh.calc_edge_vector(h);
+      double angle = mesh.calc_dihedral_angle(h); // signed; returns 0 at the boundary
       mesh.data(v).mean += angle * vec.norm();
     }
     mesh.data(v).mean *= 0.25 / vertex_area[v];
