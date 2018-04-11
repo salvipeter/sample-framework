@@ -112,7 +112,7 @@ void MyWindow::setCutoff() {
 
   if(dlg->exec() == QDialog::Accepted) {
     viewer->setCutoffRatio(sb->value());
-    viewer->updateGL();
+    viewer->update();
   }
 }
 
@@ -150,7 +150,7 @@ void MyWindow::setRange() {
   if(dlg.exec() == QDialog::Accepted) {
     viewer->setMeanMin(sb1->value());
     viewer->setMeanMax(sb2->value());
-    viewer->updateGL();
+    viewer->update();
   }
 }
 

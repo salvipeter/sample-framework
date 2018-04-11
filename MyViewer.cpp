@@ -304,7 +304,7 @@ void MyViewer::setupCamera() {
   setSelectedName(-1);
   axes.shown = false;
 
-  updateGL();
+  update();
 }
 
 bool MyViewer::openMesh(const std::string &filename) {
@@ -516,31 +516,31 @@ void MyViewer::keyPressEvent(QKeyEvent *e) {
     switch (e->key()) {
     case Qt::Key_P:
       visualization = Visualization::PLAIN;
-      updateGL();
+      update();
       break;
     case Qt::Key_M:
       visualization = Visualization::MEAN;
-      updateGL();
+      update();
       break;
     case Qt::Key_I:
       visualization = Visualization::ISOPHOTES;
-      updateGL();
+      update();
       break;
     case Qt::Key_C:
       show_control_points = !show_control_points;
-      updateGL();
+      update();
       break;
     case Qt::Key_S:
       show_solid = !show_solid;
-      updateGL();
+      update();
       break;
     case Qt::Key_W:
       show_wireframe = !show_wireframe;
-      updateGL();
+      update();
       break;
     case Qt::Key_F:
       fairMesh();
-      updateGL();
+      update();
       break;
     default:
       QGLViewer::keyPressEvent(e);
@@ -627,7 +627,7 @@ void MyViewer::mouseMoveEvent(QMouseEvent *e) {
   if (model_type == ModelType::BEZIER_SURFACE)
     control_points[selected_vertex] = axes.position;
   updateMesh();
-  updateGL();
+  update();
 }
 
 QString MyViewer::helpString() const {
