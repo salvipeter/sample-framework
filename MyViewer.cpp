@@ -612,15 +612,23 @@ void MyViewer::generateMesh() {
 
 void MyViewer::mouseMoveEvent(QMouseEvent *e) {
   if (!axes.shown || axes.selected_axis < 0 ||
-      !(e->modifiers() & Qt::ShiftModifier) ||
+      !(e->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier)) ||
       !(e->buttons() & Qt::LeftButton))
     return QGLViewer::mouseMoveEvent(e);
 
-  Vec from, dir, axis(axes.selected_axis == 0, axes.selected_axis == 1, axes.selected_axis == 2);
-  camera()->convertClickToLine(e->pos(), from, dir);
-  auto p = intersectLines(axes.grabbed_pos, axis, from, dir);
-  float d = (p - axes.grabbed_pos) * axis;
-  axes.position[axes.selected_axis] = axes.original_pos[axes.selected_axis] + d;
+  if (e->modifiers() & Qt::ControlModifier) {
+    // move in screen plane
+    double depth = camera()->projectedCoordinatesOf(axes.position)[2];
+    Vec q = camera()->unprojectedCoordinatesOf(Vec(e->pos().x(), e->pos().y(), depth));
+    axes.position = q;
+  } else {
+    Vec from, dir, axis(axes.selected_axis == 0, axes.selected_axis == 1, axes.selected_axis == 2);
+    camera()->convertClickToLine(e->pos(), from, dir);
+    auto p = intersectLines(axes.grabbed_pos, axis, from, dir);
+    float d = (p - axes.grabbed_pos) * axis;
+    axes.position[axes.selected_axis] = axes.original_pos[axes.selected_axis] + d;
+  }
+
   if (model_type == ModelType::MESH)
     mesh.set_point(MyMesh::VertexHandle(selected_vertex),
                    Vector(static_cast<double *>(axes.position)));
@@ -649,7 +657,7 @@ QString MyViewer::helpString() const {
                "<p>There is also a simple selection and movement interface, enabled "
                "only when the wireframe/controlnet is displayed: a mesh vertex can be selected "
                "by shift-clicking, and it can be moved by shift-dragging one of the "
-               "displayed axes.</p>"
+               "displayed axes. Pressing ctrl enables movement in the screen plane.</p>"
                "<p>Note that libQGLViewer is furnished with a lot of useful features, "
                "such as storing/loading view positions, or saving screenshots. "
                "OpenMesh also has a nice collection of tools for mesh manipulation: "
