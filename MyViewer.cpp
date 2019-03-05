@@ -619,8 +619,7 @@ void MyViewer::mouseMoveEvent(QMouseEvent *e) {
   if (e->modifiers() & Qt::ControlModifier) {
     // move in screen plane
     double depth = camera()->projectedCoordinatesOf(axes.position)[2];
-    Vec q = camera()->unprojectedCoordinatesOf(Vec(e->pos().x(), e->pos().y(), depth));
-    axes.position = q;
+    axes.position = camera()->unprojectedCoordinatesOf(Vec(e->pos().x(), e->pos().y(), depth));
   } else {
     Vec from, dir, axis(axes.selected_axis == 0, axes.selected_axis == 1, axes.selected_axis == 2);
     camera()->convertClickToLine(e->pos(), from, dir);
