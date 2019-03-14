@@ -611,7 +611,8 @@ void MyViewer::generateMesh() {
 }
 
 void MyViewer::mouseMoveEvent(QMouseEvent *e) {
-  if (!axes.shown || axes.selected_axis < 0 ||
+  if (!axes.shown ||
+      (axes.selected_axis < 0 && !(e->modifiers() & Qt::ControlModifier)) ||
       !(e->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier)) ||
       !(e->buttons() & Qt::LeftButton))
     return QGLViewer::mouseMoveEvent(e);
