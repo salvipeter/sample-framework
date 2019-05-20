@@ -23,6 +23,7 @@ public:
   inline void setMeanMax(double max);
   bool openMesh(const std::string &filename);
   bool openBezier(const std::string &filename);
+  bool saveBezier(const std::string &filename);
 
 signals:
   void startComputation(QString message);

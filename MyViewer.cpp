@@ -357,6 +357,21 @@ bool MyViewer::openBezier(const std::string &filename) {
   return true;
 }
 
+bool MyViewer::saveBezier(const std::string &filename) {
+  if (model_type != ModelType::BEZIER_SURFACE)
+    return false;
+
+  try {
+    std::ofstream f(filename.c_str());
+    f << degree[0] << ' ' << degree[1] << std::endl;
+    for (const auto &p : control_points)
+      f << p[0] << ' ' << p[1] << ' ' << p[2] << std::endl;
+  } catch(std::ifstream::failure) {
+    return false;
+  }
+  return true;
+}
+
 void MyViewer::init() {
   glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 1);
   QImage img(":/isophotes.png");

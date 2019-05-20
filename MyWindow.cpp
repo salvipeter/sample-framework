@@ -29,6 +29,10 @@ MyWindow::MyWindow(QApplication *parent) :
   openAction->setStatusTip(tr("Load a model from a file"));
   connect(openAction, SIGNAL(triggered()), this, SLOT(open()));
 
+  auto saveAction = new QAction(tr("&Save as.."), this);
+  saveAction->setStatusTip(tr("Save a Bézier surface to a file"));
+  connect(saveAction, SIGNAL(triggered()), this, SLOT(save()));
+
   auto quitAction = new QAction(tr("&Quit"), this);
   quitAction->setShortcut(tr("Ctrl+Q"));
   quitAction->setStatusTip(tr("Quit the program"));
@@ -44,6 +48,7 @@ MyWindow::MyWindow(QApplication *parent) :
 
   auto fileMenu = menuBar()->addMenu(tr("&File"));
   fileMenu->addAction(openAction);
+  fileMenu->addAction(saveAction);
   fileMenu->addAction(quitAction);
 
   auto visMenu = menuBar()->addMenu(tr("&Visualization"));
@@ -57,7 +62,8 @@ MyWindow::~MyWindow() {
 void MyWindow::open() {
   auto filename =
     QFileDialog::getOpenFileName(this, tr("Open File"), last_directory,
-                                 tr("Mesh (*.obj *.ply *.stl);;"
+                                 tr("Readable files (*.obj *.ply *.stl *.bzr);;"
+                                    "Mesh (*.obj *.ply *.stl);;"
                                     "Bézier surface (*.bzr);;"
                                     "All files (*.*)"));
   if(filename.isEmpty())
@@ -73,6 +79,19 @@ void MyWindow::open() {
   if (!ok)
     QMessageBox::warning(this, tr("Cannot open file"),
                          tr("Could not open file: ") + filename + ".");
+}
+
+void MyWindow::save() {
+  auto filename =
+    QFileDialog::getSaveFileName(this, tr("Save File"), last_directory,
+                                 tr("Bézier surface (*.bzr);;"));
+  if(filename.isEmpty())
+    return;
+  last_directory = QFileInfo(filename).absolutePath();
+
+  if (!viewer->saveBezier(filename.toUtf8().data()))
+    QMessageBox::warning(this, tr("Cannot save file"),
+                         tr("Could not save file: ") + filename + ".");
 }
 
 void MyWindow::setCutoff() {
