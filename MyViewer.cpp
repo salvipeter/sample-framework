@@ -342,6 +342,7 @@ bool MyViewer::openBezier(const std::string &filename) {
   size_t n, m;
   try {
     std::ifstream f(filename.c_str());
+    f.exceptions(std::ios::failbit | std::ios::badbit);
     f >> n >> m;
     degree[0] = n++; degree[1] = m++;
     control_points.resize(n * m);
@@ -363,6 +364,7 @@ bool MyViewer::saveBezier(const std::string &filename) {
 
   try {
     std::ofstream f(filename.c_str());
+    f.exceptions(std::ios::failbit | std::ios::badbit);
     f << degree[0] << ' ' << degree[1] << std::endl;
     for (const auto &p : control_points)
       f << p[0] << ' ' << p[1] << ' ' << p[2] << std::endl;
