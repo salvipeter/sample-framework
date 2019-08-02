@@ -349,7 +349,7 @@ bool MyViewer::openBezier(const std::string &filename) {
     for (size_t i = 0, index = 0; i < n; ++i)
       for (size_t j = 0; j < m; ++j, ++index)
         f >> control_points[index][0] >> control_points[index][1] >> control_points[index][2];
-  } catch(std::ifstream::failure) {
+  } catch(std::ifstream::failure &) {
     return false;
   }
   model_type = ModelType::BEZIER_SURFACE;
@@ -368,7 +368,7 @@ bool MyViewer::saveBezier(const std::string &filename) {
     f << degree[0] << ' ' << degree[1] << std::endl;
     for (const auto &p : control_points)
       f << p[0] << ' ' << p[1] << ' ' << p[2] << std::endl;
-  } catch(std::ifstream::failure) {
+  } catch(std::ifstream::failure &) {
     return false;
   }
   return true;
