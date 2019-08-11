@@ -198,8 +198,8 @@ void MyWindow::setSlicing() {
     sb_v[i]->setSingleStep(0.01);
     sb_v[i]->setValue(viewer->getSlicingDir()[i]);
   }
-  sb_s->setDecimals(2);
-  sb_s->setRange(0, 1000);
+  sb_s->setDecimals(6);
+  sb_s->setRange(0, 10000);
   sb_s->setSingleStep(1);
   sb_s->setValue(viewer->getSlicingScaling());
   connect(cancel, SIGNAL(pressed()), dlg.get(), SLOT(reject()));
