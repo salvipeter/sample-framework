@@ -46,6 +46,10 @@ MyWindow::MyWindow(QApplication *parent) :
   rangeAction->setStatusTip(tr("Set mean map range"));
   connect(rangeAction, SIGNAL(triggered()), this, SLOT(setRange()));
 
+  auto slicingAction = new QAction(tr("Set &slicing parameters"), this);
+  rangeAction->setStatusTip(tr("Set contouring direction and scaling"));
+  connect(slicingAction, SIGNAL(triggered()), this, SLOT(setSlicing()));
+
   auto fileMenu = menuBar()->addMenu(tr("&File"));
   fileMenu->addAction(openAction);
   fileMenu->addAction(saveAction);
@@ -54,6 +58,7 @@ MyWindow::MyWindow(QApplication *parent) :
   auto visMenu = menuBar()->addMenu(tr("&Visualization"));
   visMenu->addAction(cutoffAction);
   visMenu->addAction(rangeAction);
+  visMenu->addAction(slicingAction);
 }
 
 MyWindow::~MyWindow() {
@@ -169,6 +174,54 @@ void MyWindow::setRange() {
   if(dlg.exec() == QDialog::Accepted) {
     viewer->setMeanMin(sb1->value());
     viewer->setMeanMax(sb2->value());
+    viewer->update();
+  }
+}
+
+void MyWindow::setSlicing() {
+  auto dlg = std::make_unique<QDialog>(this);
+  auto *hb1    = new QHBoxLayout,
+       *hb2    = new QHBoxLayout,
+       *hb3    = new QHBoxLayout;
+  auto *vb     = new QVBoxLayout;
+  auto *text_v = new QLabel(tr("Slicing direction:"));
+  QDoubleSpinBox *sb_v[3];
+  auto *text_s = new QLabel(tr("Slicing scaling:"));
+  auto *sb_s   = new QDoubleSpinBox;
+  auto *cancel = new QPushButton(tr("Cancel"));
+  auto *ok     = new QPushButton(tr("Ok"));
+
+  for (int i = 0; i < 3; ++i) {
+    sb_v[i] = new QDoubleSpinBox;
+    sb_v[i]->setDecimals(3);
+    sb_v[i]->setRange(-1, 1);
+    sb_v[i]->setSingleStep(0.01);
+    sb_v[i]->setValue(viewer->getSlicingDir()[i]);
+  }
+  sb_s->setDecimals(2);
+  sb_s->setRange(0, 1000);
+  sb_s->setSingleStep(1);
+  sb_s->setValue(viewer->getSlicingScaling());
+  connect(cancel, SIGNAL(pressed()), dlg.get(), SLOT(reject()));
+  connect(ok,     SIGNAL(pressed()), dlg.get(), SLOT(accept()));
+  ok->setDefault(true);
+
+  hb1->addWidget(text_v);
+  hb1->addWidget(sb_v[0]); hb1->addWidget(sb_v[1]); hb1->addWidget(sb_v[2]);
+  hb2->addWidget(text_s);
+  hb2->addWidget(sb_s);
+  hb3->addWidget(cancel);
+  hb3->addWidget(ok);
+  vb->addLayout(hb1);
+  vb->addLayout(hb2);
+  vb->addLayout(hb3);
+
+  dlg->setWindowTitle(tr("Set slicing"));
+  dlg->setLayout(vb);
+
+  if(dlg->exec() == QDialog::Accepted) {
+    viewer->setSlicingDir(sb_v[0]->value(), sb_v[1]->value(), sb_v[2]->value());
+    viewer->setSlicingScaling(sb_s->value());
     viewer->update();
   }
 }

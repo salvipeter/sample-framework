@@ -21,6 +21,10 @@ public:
   inline void setMeanMin(double min);
   inline double getMeanMax() const;
   inline void setMeanMax(double max);
+  inline const double *getSlicingDir() const;
+  inline void setSlicingDir(double x, double y, double z);
+  inline double getSlicingScaling() const;
+  inline void setSlicingScaling(double scaling);
   bool openMesh(const std::string &filename);
   bool openBezier(const std::string &filename);
   bool saveBezier(const std::string &filename);
@@ -89,8 +93,10 @@ private:
   // Visualization
   double mean_min, mean_max, cutoff_ratio;
   bool show_control_points, show_solid, show_wireframe;
-  enum class Visualization { PLAIN, MEAN, ISOPHOTES } visualization;
-  GLuint isophote_texture;
+  enum class Visualization { PLAIN, MEAN, SLICING, ISOPHOTES } visualization;
+  GLuint isophote_texture, slicing_texture;
+  Vector slicing_dir;
+  double slicing_scaling;
   int selected_vertex;
   struct ModificationAxes {
     bool shown;

@@ -30,7 +30,7 @@ MyViewer::MyViewer(QWidget *parent) :
   QGLViewer(parent), model_type(ModelType::NONE),
   mean_min(0.0), mean_max(0.0), cutoff_ratio(0.05),
   show_control_points(true), show_solid(true), show_wireframe(false),
-  visualization(Visualization::PLAIN)
+  visualization(Visualization::PLAIN), slicing_dir(0, 0, 1), slicing_scaling(1)
 {
   setSelectRegionWidth(10);
   setSelectRegionHeight(10);
@@ -39,6 +39,7 @@ MyViewer::MyViewer(QWidget *parent) :
 
 MyViewer::~MyViewer() {
   glDeleteTextures(1, &isophote_texture);
+  glDeleteTextures(1, &slicing_texture);
 }
 
 void MyViewer::updateMeanMinMax() {
@@ -376,6 +377,7 @@ bool MyViewer::saveBezier(const std::string &filename) {
 
 void MyViewer::init() {
   glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 1);
+
   QImage img(":/isophotes.png");
   glGenTextures(1, &isophote_texture);
   glBindTexture(GL_TEXTURE_2D, isophote_texture);
@@ -385,6 +387,14 @@ void MyViewer::init() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, img.width(), img.height(), 0, GL_BGRA,
                GL_UNSIGNED_BYTE, img.convertToFormat(QImage::Format_ARGB32).bits());
+
+  glGenTextures(1, &slicing_texture);
+  glBindTexture(GL_TEXTURE_1D, slicing_texture);
+  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  static const unsigned char slicing_img[] = { 0b11111111, 0b00011100 };
+  glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, 2, 0, GL_RGB, GL_UNSIGNED_BYTE_3_3_2, &slicing_img);
 }
 
 void MyViewer::draw() {
@@ -406,12 +416,18 @@ void MyViewer::draw() {
       glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
       glEnable(GL_TEXTURE_GEN_S);
       glEnable(GL_TEXTURE_GEN_T);
+    } else if (visualization == Visualization::SLICING) {
+      glBindTexture(GL_TEXTURE_1D, isophote_texture);
+      glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+      glEnable(GL_TEXTURE_1D);
     }
     for (auto f : mesh.faces()) {
       glBegin(GL_POLYGON);
       for (auto v : mesh.fv_range(f)) {
         if (visualization == Visualization::MEAN)
           glColor3dv(meanMapColor(mesh.data(v).mean));
+        else if (visualization == Visualization::SLICING)
+          glTexCoord1d(mesh.point(v) | slicing_dir * slicing_scaling);
         glNormal3dv(mesh.normal(v).data());
         glVertex3dv(mesh.point(v).data());
       }
@@ -422,6 +438,8 @@ void MyViewer::draw() {
       glDisable(GL_TEXTURE_GEN_T);
       glDisable(GL_TEXTURE_2D);
       glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    } else if (visualization == Visualization::SLICING) {
+      glDisable(GL_TEXTURE_1D);
     }
   }
 
@@ -561,6 +579,10 @@ void MyViewer::keyPressEvent(QKeyEvent *e) {
       visualization = Visualization::MEAN;
       update();
       break;
+    case Qt::Key_L:
+      visualization = Visualization::SLICING;
+      update();
+      break;
     case Qt::Key_I:
       visualization = Visualization::ISOPHOTES;
       update();
@@ -687,6 +709,7 @@ QString MyViewer::helpString() const {
                "<ul>"
                "<li>&nbsp;P: Set plain map (no coloring)</li>"
                "<li>&nbsp;M: Set mean curvature map</li>"
+               "<li>&nbsp;L: Set slicing map</li>"
                "<li>&nbsp;I: Set isophote line map</li>"
                "<li>&nbsp;C: Toggle control polygon visualization</li>"
                "<li>&nbsp;S: Toggle solid (filled polygon) visualization</li>"

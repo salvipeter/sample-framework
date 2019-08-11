@@ -22,3 +22,20 @@ double MyViewer::getMeanMax() const {
 void MyViewer::setMeanMax(double max) {
   mean_max = max;
 }
+
+const double *MyViewer::getSlicingDir() const {
+  return slicing_dir.data();
+}
+
+void MyViewer::setSlicingDir(double x, double y, double z) {
+  slicing_dir = Vector(x, y, z).normalized();
+}
+
+double MyViewer::getSlicingScaling() const {
+  return slicing_scaling;
+}
+
+void MyViewer::setSlicingScaling(double scaling) {
+  slicing_scaling = scaling;
+}
+
