@@ -324,7 +324,7 @@ void MyViewer::setupCamera() {
   camera()->setSceneBoundingBox(Vec(box_min.data()), Vec(box_max.data()));
   camera()->showEntireScene();
 
-  slicing_scaling = (box_max - box_min).norm() / 500.0;
+  slicing_scaling = 20 / (box_max - box_min).max();
 
   setSelectedName(-1);
   axes.shown = false;
