@@ -324,6 +324,8 @@ void MyViewer::setupCamera() {
   camera()->setSceneBoundingBox(Vec(box_min.data()), Vec(box_max.data()));
   camera()->showEntireScene();
 
+  slicing_scaling = (box_max - box_min).norm() / 500.0;
+
   setSelectedName(-1);
   axes.shown = false;
 
@@ -606,7 +608,21 @@ void MyViewer::keyPressEvent(QKeyEvent *e) {
     default:
       QGLViewer::keyPressEvent(e);
     }
-  else
+  else if (e->modifiers() == Qt::KeypadModifier)
+    switch (e->key()) {
+    case Qt::Key_Plus:
+      slicing_scaling *= 2;
+      update();
+      break;
+    case Qt::Key_Minus:
+      slicing_scaling /= 2;
+      update();
+      break;
+    case Qt::Key_Asterisk:
+      slicing_dir = Vector(static_cast<double *>(camera()->viewDirection()));
+      update();
+      break;
+    } else
     QGLViewer::keyPressEvent(e);
 }
 
@@ -709,7 +725,10 @@ QString MyViewer::helpString() const {
                "<ul>"
                "<li>&nbsp;P: Set plain map (no coloring)</li>"
                "<li>&nbsp;M: Set mean curvature map</li>"
-               "<li>&nbsp;L: Set slicing map</li>"
+               "<li>&nbsp;L: Set slicing map<ul>"
+               "<li>&nbsp;+: Increase slicing density</li>"
+               "<li>&nbsp;-: Decrease slicing density</li>"
+               "<li>&nbsp;*: Set slicing direction to view</li></ul></li>"
                "<li>&nbsp;I: Set isophote line map</li>"
                "<li>&nbsp;C: Toggle control polygon visualization</li>"
                "<li>&nbsp;S: Toggle solid (filled polygon) visualization</li>"
