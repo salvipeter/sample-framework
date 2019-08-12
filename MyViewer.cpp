@@ -573,6 +573,13 @@ void MyViewer::postSelection(const QPoint &p) {
 void MyViewer::keyPressEvent(QKeyEvent *e) {
   if (e->modifiers() == Qt::NoModifier)
     switch (e->key()) {
+    case Qt::Key_O:
+      if (camera()->type() == qglviewer::Camera::PERSPECTIVE)
+        camera()->setType(qglviewer::Camera::ORTHOGRAPHIC);
+      else
+        camera()->setType(qglviewer::Camera::PERSPECTIVE);
+      update();
+      break;
     case Qt::Key_P:
       visualization = Visualization::PLAIN;
       update();
@@ -723,6 +730,7 @@ QString MyViewer::helpString() const {
                "parametric surfaces, etc.</p>"
                "<p>The following hotkeys are available:</p>"
                "<ul>"
+               "<li>&nbsp;O: Toggle orthographic projection</li>"
                "<li>&nbsp;P: Set plain map (no coloring)</li>"
                "<li>&nbsp;M: Set mean curvature map</li>"
                "<li>&nbsp;L: Set slicing map<ul>"
