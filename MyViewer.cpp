@@ -419,7 +419,7 @@ void MyViewer::draw() {
       glEnable(GL_TEXTURE_GEN_S);
       glEnable(GL_TEXTURE_GEN_T);
     } else if (visualization == Visualization::SLICING) {
-      glBindTexture(GL_TEXTURE_1D, isophote_texture);
+      glBindTexture(GL_TEXTURE_1D, slicing_texture);
       glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
       glEnable(GL_TEXTURE_1D);
     }
