@@ -1,5 +1,4 @@
-syntax: glob
-
+sample-framework
 *~
 .\#*
 *.o
@@ -7,4 +6,5 @@ syntax: glob
 *.ply
 moc_*
 qrc_*
+*.stash
 Makefile
