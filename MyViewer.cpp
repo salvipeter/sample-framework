@@ -83,6 +83,8 @@ void MyViewer::localSystem(const MyViewer::Vector &normal,
 double MyViewer::voronoiWeight(MyViewer::MyMesh::HalfedgeHandle in_he) {
   // Returns the area of the triangle bounded by in_he that is closest
   // to the vertex pointed to by in_he.
+  if (mesh.is_boundary(in_he))
+    return 0;
   auto next = mesh.next_halfedge_handle(in_he);
   auto prev = mesh.prev_halfedge_handle(in_he);
   double c2 = mesh.calc_edge_vector(in_he).sqrnorm();
