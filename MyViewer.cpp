@@ -392,6 +392,18 @@ void MyViewer::init() {
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, img.width(), img.height(), 0, GL_BGRA,
                GL_UNSIGNED_BYTE, img.convertToFormat(QImage::Format_ARGB32).bits());
 
+  QImage img2(":/isophotes-lines.png");
+  glGenTextures(1, &isophote_texture2);
+  glBindTexture(GL_TEXTURE_2D, isophote_texture2);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, img2.width(), img2.height(), 0, GL_BGRA,
+               GL_UNSIGNED_BYTE, img2.convertToFormat(QImage::Format_ARGB32).bits());
+
+  current_isophote_texture = isophote_texture;
+
   glGenTextures(1, &slicing_texture);
   glBindTexture(GL_TEXTURE_1D, slicing_texture);
   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -413,7 +425,7 @@ void MyViewer::draw() {
     if (visualization == Visualization::PLAIN)
       glColor3d(1.0, 1.0, 1.0);
     else if (visualization == Visualization::ISOPHOTES) {
-      glBindTexture(GL_TEXTURE_2D, isophote_texture);
+      glBindTexture(GL_TEXTURE_2D, current_isophote_texture);
       glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
       glEnable(GL_TEXTURE_2D);
       glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
@@ -598,6 +610,13 @@ void MyViewer::keyPressEvent(QKeyEvent *e) {
       visualization = Visualization::ISOPHOTES;
       update();
       break;
+    case Qt::Key_J:
+      if (current_isophote_texture == isophote_texture)
+        current_isophote_texture = isophote_texture2;
+      else
+        current_isophote_texture = isophote_texture;
+      update();
+      break;
     case Qt::Key_C:
       show_control_points = !show_control_points;
       update();
@@ -740,6 +759,7 @@ QString MyViewer::helpString() const {
                "<li>&nbsp;-: Decrease slicing density</li>"
                "<li>&nbsp;*: Set slicing direction to view</li></ul></li>"
                "<li>&nbsp;I: Set isophote line map</li>"
+               "<li>&nbsp;J: Toggle alternative isophote texture</li>"
                "<li>&nbsp;C: Toggle control polygon visualization</li>"
                "<li>&nbsp;S: Toggle solid (filled polygon) visualization</li>"
                "<li>&nbsp;W: Toggle wireframe visualization</li>"
