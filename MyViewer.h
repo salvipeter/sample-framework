@@ -25,8 +25,8 @@ public:
   inline void setSlicingDir(double x, double y, double z);
   inline double getSlicingScaling() const;
   inline void setSlicingScaling(double scaling);
-  bool openMesh(const std::string &filename);
-  bool openBezier(const std::string &filename);
+  bool openMesh(const std::string &filename, bool update_view = true);
+  bool openBezier(const std::string &filename, bool update_view = true);
   bool saveBezier(const std::string &filename);
 
 signals:
@@ -104,6 +104,7 @@ private:
     int selected_axis;
     Vec position, grabbed_pos, original_pos;
   } axes;
+  std::string last_filename;
 };
 
 #include "MyViewer.hpp"

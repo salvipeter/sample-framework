@@ -30,7 +30,8 @@ MyViewer::MyViewer(QWidget *parent) :
   QGLViewer(parent), model_type(ModelType::NONE),
   mean_min(0.0), mean_max(0.0), cutoff_ratio(0.05),
   show_control_points(true), show_solid(true), show_wireframe(false),
-  visualization(Visualization::PLAIN), slicing_dir(0, 0, 1), slicing_scaling(1)
+  visualization(Visualization::PLAIN), slicing_dir(0, 0, 1), slicing_scaling(1),
+  last_filename("")
 {
   setSelectRegionWidth(10);
   setSelectRegionHeight(10);
@@ -334,16 +335,18 @@ void MyViewer::setupCamera() {
   update();
 }
 
-bool MyViewer::openMesh(const std::string &filename) {
+bool MyViewer::openMesh(const std::string &filename, bool update_view) {
   if (!OpenMesh::IO::read_mesh(mesh, filename) || mesh.n_vertices() == 0)
     return false;
   model_type = ModelType::MESH;
-  updateMesh();
-  setupCamera();
+  last_filename = filename;
+  updateMesh(update_view);
+  if (update_view)
+    setupCamera();
   return true;
 }
 
-bool MyViewer::openBezier(const std::string &filename) {
+bool MyViewer::openBezier(const std::string &filename, bool update_view) {
   size_t n, m;
   try {
     std::ifstream f(filename.c_str());
@@ -358,8 +361,10 @@ bool MyViewer::openBezier(const std::string &filename) {
     return false;
   }
   model_type = ModelType::BEZIER_SURFACE;
-  updateMesh();
-  setupCamera();
+  last_filename = filename;
+  updateMesh(update_view);
+  if (update_view)
+    setupCamera();
   return true;
 }
 
@@ -587,6 +592,13 @@ void MyViewer::postSelection(const QPoint &p) {
 void MyViewer::keyPressEvent(QKeyEvent *e) {
   if (e->modifiers() == Qt::NoModifier)
     switch (e->key()) {
+    case Qt::Key_R:
+      if (model_type == ModelType::MESH)
+        openMesh(last_filename, false);
+      else if (model_type == ModelType::BEZIER_SURFACE)
+        openBezier(last_filename, false);
+      update();
+      break;
     case Qt::Key_O:
       if (camera()->type() == qglviewer::Camera::PERSPECTIVE)
         camera()->setType(qglviewer::Camera::ORTHOGRAPHIC);
@@ -751,6 +763,7 @@ QString MyViewer::helpString() const {
                "parametric surfaces, etc.</p>"
                "<p>The following hotkeys are available:</p>"
                "<ul>"
+               "<li>&nbsp;R: Reload model</li>"
                "<li>&nbsp;O: Toggle orthographic projection</li>"
                "<li>&nbsp;P: Set plain map (no coloring)</li>"
                "<li>&nbsp;M: Set mean curvature map</li>"
