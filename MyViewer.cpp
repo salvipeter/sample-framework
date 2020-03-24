@@ -40,6 +40,7 @@ MyViewer::MyViewer(QWidget *parent) :
 
 MyViewer::~MyViewer() {
   glDeleteTextures(1, &isophote_texture);
+  glDeleteTextures(1, &environment_texture);
   glDeleteTextures(1, &slicing_texture);
 }
 
