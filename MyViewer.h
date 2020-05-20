@@ -64,7 +64,7 @@ private:
 
   // Bezier
   static void bernsteinAll(size_t n, double u, std::vector<double> &coeff);
-  void generateMesh();
+  void generateMesh(size_t resolution);
 
   // Visualization
   void setupCamera();

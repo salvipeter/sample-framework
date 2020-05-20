@@ -310,7 +310,7 @@ void MyViewer::updateVertexNormals() {
 
 void MyViewer::updateMesh(bool update_mean_range) {
   if (model_type == ModelType::BEZIER_SURFACE)
-    generateMesh();
+    generateMesh(50);
   mesh.request_face_normals(); mesh.request_vertex_normals();
   mesh.update_face_normals(); //mesh.update_vertex_normals();
   updateVertexNormals();
@@ -689,10 +689,7 @@ void MyViewer::bernsteinAll(size_t n, double u, std::vector<double> &coeff) {
   }
 }
 
-void MyViewer::generateMesh() {
-  size_t resolution = 30;
-
-  mesh.clear();
+void MyViewer::generateMesh(size_t resolution) {
   std::vector<MyMesh::VertexHandle> handles, tri;
   size_t n = degree[0], m = degree[1];
 
