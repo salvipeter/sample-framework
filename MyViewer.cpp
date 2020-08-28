@@ -10,13 +10,16 @@
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <OpenMesh/Tools/Smoother/JacobiLaplaceSmootherT.hh>
 
-// #define BETTER_MEAN_CURVATURE
-
 #ifdef BETTER_MEAN_CURVATURE
 #include "Eigen/Eigenvalues"
 #include "Eigen/Geometry"
 #include "Eigen/LU"
 #include "Eigen/SVD"
+#endif
+
+#ifdef USE_JET_NORMALS
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include <CGAL/jet_estimate_normals.h>
 #endif
 
 #include "MyViewer.h"
@@ -287,6 +290,39 @@ void MyViewer::fairMesh() {
   emit endComputation();
 }
 
+#ifdef USE_JET_NORMALS
+
+void MyViewer::updateVertexNormalsWithJetFit(size_t neighbors) {
+  using Kernel = CGAL::Exact_predicates_inexact_constructions_kernel;
+  using CGALPoint = Kernel::Point_3;
+  using CGALVector = Kernel::Vector_3;
+  using PointWithNormal = std::pair<CGALPoint, CGALVector>;
+  using PointMap = CGAL::First_of_pair_property_map<PointWithNormal>;
+  using NormalMap = CGAL::Second_of_pair_property_map<PointWithNormal>;
+  using CT = CGAL::Sequential_tag; // or CGAL::Parallel_tag with TBB
+
+  std::vector<PointWithNormal> points;
+  for (auto v : mesh.vertices()) {
+    const auto &p = mesh.point(v);
+    points.push_back({ { p[0], p[1], p[2] }, { } });
+  }
+
+  CGAL::jet_estimate_normals<CT>(points, neighbors,
+                                 CGAL::parameters::point_map(PointMap()).normal_map(NormalMap()));
+
+  size_t k = 0;
+  for (auto v : mesh.vertices()) {
+    auto n_old = mesh.normal(v);
+    auto n = points[k++].second;
+    Vector n_new = { n[0], n[1], n[2] };
+    if ((n_old | n_new) < 0)
+      n_new *= -1;
+    mesh.set_normal(v, n_new);
+  }
+}
+
+#endif // USE_JET_NORMALS
+
 void MyViewer::updateVertexNormals() {
   // Weights according to:
   //   N. Max, Weights for computing vertex normals from facet normals.
@@ -312,8 +348,13 @@ void MyViewer::updateMesh(bool update_mean_range) {
   if (model_type == ModelType::BEZIER_SURFACE)
     generateMesh(50);
   mesh.request_face_normals(); mesh.request_vertex_normals();
-  mesh.update_face_normals(); //mesh.update_vertex_normals();
+  mesh.update_face_normals();
+#ifdef USE_JET_NORMALS
+  mesh.update_vertex_normals();
+  updateVertexNormalsWithJetFit(20);
+#else // !USE_JET_NORMALS
   updateVertexNormals();
+#endif
   updateMeanCurvature(update_mean_range);
 }
 
