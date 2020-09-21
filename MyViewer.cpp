@@ -731,6 +731,7 @@ void MyViewer::bernsteinAll(size_t n, double u, std::vector<double> &coeff) {
 }
 
 void MyViewer::generateMesh(size_t resolution) {
+  mesh.clear();
   std::vector<MyMesh::VertexHandle> handles, tri;
   size_t n = degree[0], m = degree[1];
 
