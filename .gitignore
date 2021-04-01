@@ -9,4 +9,8 @@ qrc_*
 *.stash
 Makefile
 .qglviewer.xml
+.vcxproj
+.sln
 
+/debug
+/release
