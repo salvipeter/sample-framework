@@ -13,11 +13,13 @@ unix:LIBS *= -lQGLViewer-qt5 -L/usr/lib/OpenMesh -lOpenMeshCore -lGL -lGLU
 # WIN32 instructions only
 
 # Replace this variable to the install path of the OpenMesh lib install
-OPENMESH_INSTALL_PATH = 'C:\\Program Files\OpenMesh'
-# If your OpenMesh source is separate from the lib install replace this variable
-OPENMESH_SRC_INSTALL_PATH = $$OPENMESH_INSTALL_PATH\include\OpenMesh
+OPENMESH_INSTALL_PATH = 'C:\Program Files\OpenMesh 8.1'
+
 # Replace this variable to the install path of libQGLViewer
-LIBQGLVIEWER_INSTALL_PATH = 'C:\\Progam Files\libQGLViewer'
+LIBQGLVIEWER_INSTALL_PATH = 'C:\Program Files\libQGLViewer'
+
+# If your OpenMesh source is separate from the lib install replace this variable
+OPENMESH_SRC_INSTALL_PATH = $$OPENMESH_INSTALL_PATH\include\
 
 win32:
 {
