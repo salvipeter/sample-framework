@@ -10,3 +10,10 @@ qrc_*
 Makefile
 .qglviewer.xml
 
+debug
+release
+
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
