@@ -21,8 +21,7 @@ LIBQGLVIEWER_INSTALL_PATH = 'C:\Program Files\libQGLViewer'
 # If your OpenMesh source is separate from the lib install replace this variable
 OPENMESH_SRC_INSTALL_PATH = $$OPENMESH_INSTALL_PATH\include\
 
-win32:
-{
+win32 {
     Release:LIBS += -lOpenMeshCore -lQGLViewer2
     else:Debug:LIBS += -lOpenMeshCored -lQGLViewerd2
     LIBS += -lOpenGL32 -lGLU32 
