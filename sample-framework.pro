@@ -15,7 +15,7 @@ unix:LIBS *= -lQGLViewer-qt5 -L/usr/lib/OpenMesh -lOpenMeshCore -lGL -lGLU
 # Replace this variable to the install path of the OpenMesh lib install
 OPENMESH_INSTALL_PATH = 'C:\\Program Files\OpenMesh'
 # If your OpenMesh source is separate from the lib install replace this variable
-OPENMESH_SRC_INSTALL_PATH = 'C:\\Program Files\OpenMesh'
+OPENMESH_SRC_INSTALL_PATH = $$OPENMESH_INSTALL_PATH
 # Replace this variable to the install path of libQGLViewer
 LIBQGLVIEWER_INSTALL_PATH = 'C:\\Progam Files\libQGLViewer'
 
