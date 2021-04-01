@@ -40,7 +40,7 @@ If any of the above is not satisfied, edit sample-framework.pro accordingly.
 1. Now open sample-framework.pro, and modify the following line:
 
         LIBQGLVIEWER_INSTALL_PATH = 'C:\\Progam Files\libQGLViewer'
-  (using the correct path on your system, of course).
+   (using the correct path on your system, of course).
 
 1. Download the source package for OpenMesh, and put it somewhere,
    e.g. at c:\Program Files\OpenMesh. Open the solution file
@@ -48,13 +48,13 @@ If any of the above is not satisfied, edit sample-framework.pro accordingly.
    Then open sample-framework.pro, and modify the following line:
 
         OPENMESH_INSTALL_PATH = 'C:\\Program Files\OpenMesh'
-  (using the correct path on your system, of course).
+   (using the correct path on your system, of course).
 
-1. If the install path of the OpenMesh source and OpenMesh binaries are separete, modify 
+1. If the install path of the OpenMesh source and OpenMesh binaries are in separated locations, modify 
 
         OPENMESH_INSTALL_PATH = 'C:\\Program Files\OpenMesh'
         OPENMESH_SRC_INSTALL_PATH = 'C:\\Program Files\OpenMesh_Src'
-accordingly. (using the correct path on your system, of course)
+   accordingly. (using the correct paths on your system, of course)
 
 1. Open Visual Studio, in the Qt menu select "Open Qt project file (*.pro)",
    and open sample-framework.pro.
