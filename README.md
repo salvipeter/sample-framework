@@ -37,30 +37,28 @@ If any of the above is not satisfied, edit sample-framework.pro accordingly.
    (in my case c:\Program Files\libQGLViewer\libQGLViewer.pro).
    Compile a release version of the library.
 
-1. Now open sample-framework.pro, and insert the following line:
+1. Now open sample-framework.pro, and modify the following line:
 
-        INCLUDEPATH += "c:\Program Files\libQGLViewer"
+        LIBQGLVIEWER_INSTALL_PATH = 'C:\\Progam Files\libQGLViewer'
   (using the correct path on your system, of course).
 
 1. Download the source package for OpenMesh, and put it somewhere,
    e.g. at c:\Program Files\OpenMesh. Open the solution file
    in Visual Studio and build a release version of the core library.
-   Then open sample-framework.pro, and insert the following line:
+   Then open sample-framework.pro, and modify the following line:
 
-        INCLUDEPATH += "c:\Program Files\OpenMesh\src"
+        OPENMESH_INSTALL_PATH = 'C:\\Program Files\OpenMesh'
   (using the correct path on your system, of course).
 
-1. The `LIBS` variable of sample-framework.pro should be updated as well,
-   replace the `LIBS` line with the following two:
+1. If the install path of the OpenMesh source and OpenMesh binaries are separete, modify 
 
-        LIBS += -L"c:\Program Files\libQGLViewer\QGLViewer\release" -lQGLViewer2
-        LIBS += -L"c:\Program Files\OpenMesh\lib" -llibOpenMeshCore
+        OPENMESH_INSTALL_PATH = 'C:\\Program Files\OpenMesh'
+        OPENMESH_SRC_INSTALL_PATH = 'C:\\Program Files\OpenMesh_Src'
+accordingly. (using the correct path on your system, of course)
 
 1. Open Visual Studio, in the Qt menu select "Open Qt project file (*.pro)",
    and open sample-framework.pro.
 
-1. In the project's properties, under C/C++ / Preprocessor, add the following
-   preprocessor definitions: `_USE_MATH_DEFINES`, `NOMINMAX`
 
 1. You should be able to build the project, but it won't start. Solution:
    copy QGLViewer2.dll (found in QGLViewer\QGLViewer\release\)
