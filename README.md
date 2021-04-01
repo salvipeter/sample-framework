@@ -50,12 +50,6 @@ If any of the above is not satisfied, edit sample-framework.pro accordingly.
         OPENMESH_INSTALL_PATH = 'C:\\Program Files\OpenMesh'
    (using the correct path on your system, of course).
 
-1. If the install path of the OpenMesh source and OpenMesh binaries are in separated locations, modify 
-
-        OPENMESH_INSTALL_PATH = 'C:\\Program Files\OpenMesh'
-        OPENMESH_SRC_INSTALL_PATH = 'C:\\Program Files\OpenMesh_Src'
-   accordingly. (using the correct paths on your system, of course)
-
 1. Open Visual Studio, in the Qt menu select "Open Qt project file (*.pro)",
    and open sample-framework.pro.
 
