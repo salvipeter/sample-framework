@@ -19,10 +19,10 @@ Dependencies:
 Assumes that:
 
 - qmake (Qt 5.x) is in the path
-- QGLViewer include files are in <standard include directory>/QGLViewer/
-- OpenMesh  include files are in <standard include directory>/OpenMesh/
-- QGLViewer library file  is  in <standard library directory>/
-- OpenMesh  library files are in /usr/lib/OpenMesh/
+- QGLViewer include files are in `<standard include directory>/QGLViewer/`
+- OpenMesh  include files are in `<standard include directory>/OpenMesh/`
+- QGLViewer library file  is  in `<standard library directory>/`
+- OpenMesh  library files are in `/usr/lib/OpenMesh/`
 
 If any of the above is not satisfied, edit sample-framework.pro accordingly.
 
