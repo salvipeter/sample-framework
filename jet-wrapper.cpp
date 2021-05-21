@@ -16,7 +16,6 @@ namespace JetWrapper {
 using Kernel = CGAL::Exact_predicates_inexact_constructions_kernel;
 using Point_3 = Kernel::Point_3;
 using Vector_3 = Kernel::Vector_3;
-using input_iterator = std::vector<Point_3>::const_iterator;
 using Tree_traits = CGAL::Search_traits_3<Kernel>;
 using Splitter = CGAL::Sliding_midpoint<Tree_traits>;
 using Tree = CGAL::Kd_tree<Tree_traits, Splitter, CGAL::Tag_true>;
@@ -33,7 +32,7 @@ static inline const Point3D &conv(const Point_3 &p) {
   return *reinterpret_cast<const Point3D *>(&p);
 }
 static inline const Vector3D &conv(const Vector_3 &p) {
-  return *reinterpret_cast<const Point3D *>(&p);
+  return *reinterpret_cast<const Vector3D *>(&p);
 }
 static inline const std::vector<Point_3> &conv(const PointVector &pv) {
   return *reinterpret_cast<const std::vector<Point_3> *>(&pv);
