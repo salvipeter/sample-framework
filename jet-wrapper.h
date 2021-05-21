@@ -3,7 +3,6 @@
 
 #ifdef USE_JET_FITTING
 
-#include <functional>
 #include <OpenMesh/Core/Geometry/VectorT.hh>
 
 namespace JetWrapper {
