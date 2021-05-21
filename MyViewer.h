@@ -57,13 +57,13 @@ private:
   // Mesh
   void updateMesh(bool update_mean_range = true);
   void updateVertexNormals();
-#ifdef USE_JET_NORMALS
-  void updateVertexNormalsWithJetFit(size_t neighbors);
+#ifdef USE_JET_FITTING
+  void updateWithJetFit(size_t neighbors);
 #endif
   void localSystem(const Vector &normal, Vector &u, Vector &v);
   double voronoiWeight(MyMesh::HalfedgeHandle in_he);
   void updateMeanMinMax();
-  void updateMeanCurvature(bool update_min_max = true);
+  void updateMeanCurvature();
 
   // Bezier
   static void bernsteinAll(size_t n, double u, std::vector<double> &coeff);

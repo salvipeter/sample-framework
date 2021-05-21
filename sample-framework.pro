@@ -5,7 +5,9 @@ CONFIG += c++14 qt opengl debug
 QT += gui widgets opengl xml
 
 HEADERS = MyWindow.h MyViewer.h MyViewer.hpp
-SOURCES = MyWindow.cpp MyViewer.cpp main.cpp
+SOURCES = MyWindow.cpp MyViewer.cpp main.cpp jet-wrapper.cpp
+
+QMAKE_CXXFLAGS += -O3
 
 unix:INCLUDEPATH += /usr/include/eigen3
 unix:LIBS *= -lQGLViewer-qt5 -lOpenMeshCore -lGL -lGLU
@@ -13,7 +15,8 @@ unix:LIBS *= -lQGLViewer-qt5 -lOpenMeshCore -lGL -lGLU
 RESOURCES = sample-framework.qrc
 
 # Optional
-# DEFINES += BETTER_MEAN_CURVATURE USE_JET_NORMALS
+# DEFINES += BETTER_MEAN_CURVATURE
+# DEFINES += USE_JET_FITTING
 # LIBS += -lCGAL # this library will be header-only from version 5
 
 ###########################

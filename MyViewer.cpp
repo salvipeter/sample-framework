@@ -17,9 +17,8 @@
 #include "Eigen/SVD"
 #endif
 
-#ifdef USE_JET_NORMALS
-#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
-#include <CGAL/jet_estimate_normals.h>
+#ifdef USE_JET_FITTING
+#include "jet-wrapper.h"
 #endif
 
 #include "MyViewer.h"
@@ -117,7 +116,7 @@ double MyViewer::voronoiWeight(MyViewer::MyMesh::HalfedgeHandle in_he) {
 }
 
 #ifndef BETTER_MEAN_CURVATURE
-void MyViewer::updateMeanCurvature(bool update_min_max) {
+void MyViewer::updateMeanCurvature() {
   std::map<MyMesh::FaceHandle, double> face_area;
   std::map<MyMesh::VertexHandle, double> vertex_area;
 
@@ -142,12 +141,9 @@ void MyViewer::updateMeanCurvature(bool update_min_max) {
     }
     mesh.data(v).mean *= 0.25 / vertex_area[v];
   }
-
-  if (update_min_max)
-    updateMeanMinMax();
 }
 #else // BETTER_MEAN_CURVATURE
-void MyViewer::updateMeanCurvature(bool update_min_max) {
+void MyViewer::updateMeanCurvature() {
   // As in the paper:
   //   S. Rusinkiewicz, Estimating curvatures and their derivatives on triangle meshes.
   //     3D Data Processing, Visualization and Transmission, IEEE, 2004.
@@ -236,9 +232,6 @@ void MyViewer::updateMeanCurvature(bool update_min_max) {
     auto k = F.eigenvalues();   // always real, because F is a symmetric real matrix
     mesh.data(v).mean = (k(0).real() + k(1).real()) / 2.0;
   }
-
-  if (update_min_max)
-    updateMeanMinMax();
 }
 #endif
 
@@ -290,38 +283,28 @@ void MyViewer::fairMesh() {
   emit endComputation();
 }
 
-#ifdef USE_JET_NORMALS
+#ifdef USE_JET_FITTING
 
-void MyViewer::updateVertexNormalsWithJetFit(size_t neighbors) {
-  using Kernel = CGAL::Exact_predicates_inexact_constructions_kernel;
-  using CGALPoint = Kernel::Point_3;
-  using CGALVector = Kernel::Vector_3;
-  using PointWithNormal = std::pair<CGALPoint, CGALVector>;
-  using PointMap = CGAL::First_of_pair_property_map<PointWithNormal>;
-  using NormalMap = CGAL::Second_of_pair_property_map<PointWithNormal>;
-  using CT = CGAL::Sequential_tag; // or CGAL::Parallel_tag with TBB
+void MyViewer::updateWithJetFit(size_t neighbors) {
+  std::vector<Vector> points;
+  for (auto v : mesh.vertices())
+    points.push_back(mesh.point(v));
 
-  std::vector<PointWithNormal> points;
+  auto nearest = JetWrapper::Nearest(points, neighbors);
+
   for (auto v : mesh.vertices()) {
-    const auto &p = mesh.point(v);
-    points.push_back({ { p[0], p[1], p[2] }, { } });
-  }
-
-  CGAL::jet_estimate_normals<CT>(points, neighbors,
-                                 CGAL::parameters::point_map(PointMap()).normal_map(NormalMap()));
-
-  size_t k = 0;
-  for (auto v : mesh.vertices()) {
-    auto n_old = mesh.normal(v);
-    auto n = points[k++].second;
-    Vector n_new = { n[0], n[1], n[2] };
-    if ((n_old | n_new) < 0)
-      n_new *= -1;
-    mesh.set_normal(v, n_new);
+    auto jet = JetWrapper::fit(mesh.point(v), nearest, 2);
+    if ((mesh.normal(v) | jet.normal) < 0) {
+      mesh.set_normal(v, -jet.normal);
+      mesh.data(v).mean = (jet.k_min + jet.k_max) / 2;
+    } else {
+      mesh.set_normal(v, jet.normal);
+      mesh.data(v).mean = -(jet.k_min + jet.k_max) / 2;
+    }
   }
 }
 
-#endif // USE_JET_NORMALS
+#endif // USE_JET_FITTING
 
 void MyViewer::updateVertexNormals() {
   // Weights according to:
@@ -349,13 +332,15 @@ void MyViewer::updateMesh(bool update_mean_range) {
     generateMesh(50);
   mesh.request_face_normals(); mesh.request_vertex_normals();
   mesh.update_face_normals();
-#ifdef USE_JET_NORMALS
+#ifdef USE_JET_FITTING
   mesh.update_vertex_normals();
-  updateVertexNormalsWithJetFit(20);
-#else // !USE_JET_NORMALS
+  updateWithJetFit(20);
+#else // !USE_JET_FITTING
   updateVertexNormals();
+  updateMeanCurvature();
 #endif
-  updateMeanCurvature(update_mean_range);
+  if (update_mean_range)
+    updateMeanMinMax();
 }
 
 void MyViewer::setupCamera() {
