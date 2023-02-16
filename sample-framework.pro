@@ -3,6 +3,9 @@
 TARGET = sample-framework
 CONFIG += c++14 qt opengl debug
 QT += gui widgets opengl xml
+equals (QT_MAJOR_VERSION, 6) {
+    QT += openglwidgets
+}
 
 HEADERS = MyWindow.h MyViewer.h MyViewer.hpp
 SOURCES = MyWindow.cpp MyViewer.cpp main.cpp jet-wrapper.cpp

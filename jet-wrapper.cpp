@@ -60,7 +60,7 @@ PointVector Nearest::operator()(const Point3D &p) const {
   if (radius != 0) {
     // Radius search
     Sphere fs(conv(p), radius, 0);
-    size_t k = neighbors || std::numeric_limits<size_t>::max;
+    size_t k = neighbors || std::numeric_limits<size_t>::max();
     size_t count = 0;
     try {
       std::function<void(const Point_3 &)> limited_search =

@@ -47,7 +47,7 @@ MyWindow::MyWindow(QApplication *parent) :
   connect(rangeAction, SIGNAL(triggered()), this, SLOT(setRange()));
 
   auto slicingAction = new QAction(tr("Set &slicing parameters"), this);
-  rangeAction->setStatusTip(tr("Set contouring direction and scaling"));
+  slicingAction->setStatusTip(tr("Set contouring direction and scaling"));
   connect(slicingAction, SIGNAL(triggered()), this, SLOT(setSlicing()));
 
   auto fileMenu = menuBar()->addMenu(tr("&File"));
